@@ -159,6 +159,10 @@
   align-content: start;
 }
 
+@media (max-width: 630px) {
+  .product-grid { padding-bottom: 90px; }
+}
+
 .product-card {
   display: flex;
   flex-direction: column;

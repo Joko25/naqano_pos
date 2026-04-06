@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import {
   ShoppingCart, Package, BarChart2, Settings,
-  Clock, Coffee
+  Clock, Coffee, ArrowRight, ChevronLeft
 } from 'lucide-react'
 import POSView from './components/POS/POSView'
 import Cart from './components/Cart/Cart'
@@ -25,7 +25,11 @@ export default function App() {
   const [shopName, setShopName] = useState('Naqano Coffee')
   const [shopLogo, setShopLogo] = useState('')
   const [now, setNow] = useState(new Date())
-  const { setTaxPercent } = useCartStore()
+  const [mobileCartOpen, setMobileCartOpen] = useState(false)
+  const { setTaxPercent, items, getTotal } = useCartStore()
+
+  const itemCount = items.reduce((s, i) => s + i.qty, 0)
+  const total = getTotal()
 
   useEffect(() => {
     getAllSettings().then(s => {
@@ -60,7 +64,7 @@ export default function App() {
             <button
               key={id}
               className={`nav-btn ${page === id ? 'active' : ''}`}
-              onClick={() => setPage(id)}
+              onClick={() => { setPage(id); if (id !== 'pos') setMobileCartOpen(false) }}
             >
               <Icon size={16} strokeWidth={2} />
               <span>{label}</span>
@@ -84,9 +88,32 @@ export default function App() {
         {(() => {
           if (page === 'pos') {
             return (
-              <div className="pos-layout">
-                <div className="pos-left"><POSView /></div>
-                <div className="pos-right"><Cart /></div>
+              <div className={`pos-layout ${mobileCartOpen ? 'cart-open' : ''}`}>
+                <div className="pos-left">
+                  <POSView />
+                  {!mobileCartOpen && itemCount > 0 && (
+                    <div className="mobile-cart-fab-wrap">
+                      <button className="mobile-cart-fab" onClick={() => setMobileCartOpen(true)}>
+                        <div className="fab-left">
+                          <div className="fab-badge">{itemCount}</div>
+                          <span>Lihat Pesanan</span>
+                        </div>
+                        <div className="fab-right">
+                          <span>Rp {total.toLocaleString('id-ID')}</span>
+                          <ArrowRight size={18} />
+                        </div>
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <div className={`pos-right ${mobileCartOpen ? 'open' : ''}`}>
+                  {mobileCartOpen && (
+                    <button className="mobile-cart-close" onClick={() => setMobileCartOpen(false)}>
+                      <ChevronLeft size={20} /> Kembali ke Menu
+                    </button>
+                  )}
+                  <Cart />
+                </div>
               </div>
             )
           }
