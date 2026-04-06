@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <!-- GoFood Logo - Gojek green circle with fork/spoon icon -->
+  <circle cx="100" cy="100" r="100" fill="#00AED6"/>
+  <!-- Fork and knife icon simplified -->
+  <text x="100" y="88" font-family="Arial, sans-serif" font-size="70" font-weight="900" text-anchor="middle" fill="white">Go</text>
+  <text x="100" y="148" font-family="Arial, sans-serif" font-size="30" font-weight="700" text-anchor="middle" fill="white">Food</text>
+</svg>

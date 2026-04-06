@@ -1,0 +1,261 @@
+/* ============================================================
+   NAQANO COFFEE POS — Global Design System
+   Tema: Tosca + Putih (Teal & White)
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+/* ---------- CSS Variables ---------- */
+:root {
+  /* Backgrounds — light theme */
+  --bg-primary: #f0faf9;
+  --bg-secondary: #ffffff;
+  --bg-card: #ffffff;
+  --bg-hover: #e6f7f5;
+  --bg-active: #ccefeb;
+
+  /* Tosca / Teal — warna utama toko */
+  --amber: #0d9488;
+  --amber-light: #2dd4bf;
+  --amber-dark: #0f766e;
+  --amber-glow: rgba(13, 148, 136, 0.12);
+  --shadow-amber: 0 4px 24px rgba(13, 148, 136, 0.22);
+
+  /* Tosca alias (untuk komponen yang pakai nama tosca) */
+  --tosca: #0d9488;
+  --tosca-light: #2dd4bf;
+  --tosca-dark: #0f766e;
+  --tosca-glow: rgba(13, 148, 136, 0.12);
+
+  /* Accent Colors */
+  --green: #16a34a;
+  --green-glow: rgba(22, 163, 74, 0.12);
+  --blue: #0284c7;
+  --blue-glow: rgba(2, 132, 199, 0.12);
+  --red: #dc2626;
+  --red-glow: rgba(220, 38, 38, 0.12);
+  --purple: #7c3aed;
+
+  /* Text */
+  --text-primary: #0f2027;
+  --text-secondary: #3d6460;
+  --text-muted: #7fa8a4;
+
+  /* Borders */
+  --border: rgba(13, 148, 136, 0.12);
+  --border-strong: rgba(13, 148, 136, 0.25);
+
+  /* Radii */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+
+  /* Shadows — lighter for white theme */
+  --shadow-sm: 0 2px 8px rgba(13, 148, 136, 0.08);
+  --shadow-md: 0 4px 20px rgba(13, 148, 136, 0.12);
+  --shadow-lg: 0 8px 40px rgba(13, 148, 136, 0.16);
+
+  --transition: 0.18s ease;
+  --transition-slow: 0.35s ease;
+}
+
+/* ---------- Reset ---------- */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  font-family: 'Inter', -apple-system, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+#root { height: 100%; display: flex; flex-direction: column; }
+
+/* ---------- Scrollbar ---------- */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--tosca-light); border-radius: 4px; opacity: 0.4; }
+
+/* ---------- Buttons ---------- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 10px 18px; border-radius: var(--radius-md); border: none; cursor: pointer;
+  font-family: inherit; font-size: 14px; font-weight: 600; letter-spacing: 0.01em;
+  transition: all var(--transition); white-space: nowrap; user-select: none;
+}
+.btn:active { transform: scale(0.97); }
+
+/* Tosca primary button */
+.btn-amber {
+  background: linear-gradient(135deg, var(--tosca), var(--tosca-dark));
+  color: #fff;
+  box-shadow: var(--shadow-amber);
+}
+.btn-amber:hover {
+  background: linear-gradient(135deg, var(--tosca-light), var(--tosca));
+  box-shadow: 0 6px 28px rgba(13,148,136,0.32);
+}
+
+.btn-green { background: var(--green); color: #fff; }
+.btn-green:hover { background: #15803d; box-shadow: 0 4px 20px rgba(22,163,74,0.3); }
+.btn-outline {
+  background: transparent;
+  border: 1.5px solid var(--border-strong);
+  color: var(--text-secondary);
+}
+.btn-outline:hover { border-color: var(--tosca); color: var(--tosca); background: var(--tosca-glow); }
+.btn-ghost { background: var(--bg-hover); color: var(--text-secondary); }
+.btn-ghost:hover { background: var(--bg-active); color: var(--text-primary); }
+.btn-danger { background: var(--red); color: #fff; }
+.btn-danger:hover { background: #b91c1c; }
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+.btn-lg { padding: 14px 28px; font-size: 16px; }
+.btn-icon { padding: 10px; border-radius: var(--radius-sm); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+/* ---------- Inputs ---------- */
+.input, .select {
+  width: 100%; padding: 10px 14px; border-radius: var(--radius-sm);
+  background: var(--bg-secondary); border: 1.5px solid var(--border);
+  color: var(--text-primary); font-family: inherit; font-size: 14px;
+  transition: border-color var(--transition), box-shadow var(--transition);
+  outline: none;
+}
+.input:focus, .select:focus { border-color: var(--tosca); box-shadow: 0 0 0 3px var(--tosca-glow); }
+.input::placeholder { color: var(--text-muted); }
+.select option { background: var(--bg-secondary); color: var(--text-primary); }
+.input-group { display: flex; flex-direction: column; gap: 6px; }
+.input-label { font-size: 12px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; }
+
+/* ---------- Cards ---------- */
+.card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+.card-body { padding: 16px; }
+
+/* ---------- Badge ---------- */
+.badge {
+  display: inline-flex; align-items: center; padding: 3px 10px;
+  border-radius: var(--radius-full); font-size: 11px; font-weight: 700; letter-spacing: 0.03em;
+}
+.badge-amber { background: var(--tosca-glow); color: var(--tosca-dark); }
+.badge-green { background: var(--green-glow); color: var(--green); }
+.badge-blue { background: var(--blue-glow); color: var(--blue); }
+.badge-red { background: var(--red-glow); color: var(--red); }
+
+/* ---------- Toggle Switch ---------- */
+.toggle { position: relative; width: 44px; height: 24px; cursor: pointer; }
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle-slider {
+  position: absolute; inset: 0; background: #cbd5e1;
+  border-radius: var(--radius-full); transition: var(--transition);
+}
+.toggle-slider::before {
+  content: ''; position: absolute; width: 18px; height: 18px;
+  left: 3px; top: 3px; background: #fff; border-radius: 50%;
+  transition: var(--transition); box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+}
+.toggle input:checked + .toggle-slider { background: var(--tosca); }
+.toggle input:checked + .toggle-slider::before { transform: translateX(20px); }
+
+/* ---------- Modal ---------- */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(15, 32, 39, 0.35);
+  backdrop-filter: blur(6px); display: flex; align-items: center;
+  justify-content: center; z-index: 1000; padding: 20px;
+  animation: fadeIn 0.2s ease;
+}
+.modal {
+  background: var(--bg-card); border: 1px solid var(--border-strong);
+  border-radius: var(--radius-xl); box-shadow: var(--shadow-lg);
+  width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto;
+  animation: slideUp 0.25s ease;
+}
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 24px 16px; border-bottom: 1px solid var(--border);
+}
+.modal-title { font-size: 18px; font-weight: 700; color: var(--text-primary); }
+.modal-body { padding: 24px; }
+.modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; gap: 10px; justify-content: flex-end; }
+.modal-close {
+  background: none; border: none; color: var(--text-muted); cursor: pointer;
+  font-size: 20px; padding: 4px; border-radius: var(--radius-sm);
+  transition: color var(--transition);
+}
+.modal-close:hover { color: var(--text-primary); }
+
+/* ---------- Tabs ---------- */
+.tabs { display: flex; gap: 4px; background: var(--bg-hover); padding: 4px; border-radius: var(--radius-lg); }
+.tab-btn {
+  flex: 1; padding: 8px 16px; border: none; cursor: pointer; border-radius: var(--radius-md);
+  background: transparent; color: var(--text-muted); font-family: inherit;
+  font-size: 13px; font-weight: 600; transition: all var(--transition);
+}
+.tab-btn.active { background: var(--bg-card); color: var(--tosca-dark); box-shadow: var(--shadow-sm); }
+
+/* ---------- Table ---------- */
+.table { width: 100%; border-collapse: collapse; }
+.table th {
+  padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 700;
+  color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border); background: var(--bg-primary);
+}
+.table td { padding: 12px 14px; border-bottom: 1px solid var(--border); font-size: 14px; color: var(--text-primary); vertical-align: middle; }
+.table tr:last-child td { border-bottom: none; }
+.table tr:hover td { background: var(--bg-hover); }
+
+/* ---------- Toast ---------- */
+.toast-container { position: fixed; top: 16px; right: 16px; z-index: 2000; display: flex; flex-direction: column; gap: 8px; }
+.toast {
+  background: var(--bg-card); border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md); padding: 12px 16px; box-shadow: var(--shadow-md);
+  display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 500;
+  animation: slideInRight 0.3s ease; min-width: 240px;
+  color: var(--text-primary);
+}
+.toast.success { border-left: 3px solid var(--green); }
+.toast.error { border-left: 3px solid var(--red); }
+.toast.info { border-left: 3px solid var(--tosca); }
+
+/* ---------- Divider ---------- */
+.divider { border: none; border-top: 1px solid var(--border); margin: 0; }
+
+/* ---------- Animations ---------- */
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes slideInRight { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+.animate-spin { animation: spin 1s linear infinite; }
+.animate-pulse { animation: pulse 2s ease infinite; }
+
+/* ---------- Utility ---------- */
+.flex { display: flex; }
+.flex-col { display: flex; flex-direction: column; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.justify-center { justify-content: center; }
+.gap-2 { gap: 8px; }
+.gap-3 { gap: 12px; }
+.gap-4 { gap: 16px; }
+.w-full { width: 100%; }
+.text-amber { color: var(--tosca); }
+.text-green { color: var(--green); }
+.text-red { color: var(--red); }
+.text-muted { color: var(--text-muted); }
+.text-secondary { color: var(--text-secondary); }
+.font-bold { font-weight: 700; }
+.font-semibold { font-weight: 600; }
+.text-sm { font-size: 12px; }
+.text-lg { font-size: 18px; }
+.text-xl { font-size: 22px; }
+.text-2xl { font-size: 28px; }
+.truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hidden { display: none; }
