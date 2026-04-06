@@ -12,10 +12,10 @@ export default defineConfig({
         name: 'Naqano Coffee POS',
         short_name: 'Naqano POS',
         description: 'Sistem Kasir Naqano Coffee',
-        theme_color: '#1a1a1a',
+        theme_color: '#0d9488',
         background_color: '#1a1a1a',
         display: 'standalone',
-        orientation: 'landscape',
+        orientation: 'any',
         icons: [
           { src: 'logo.png', sizes: '512x512', type: 'image/png' },
         ],
