@@ -4,6 +4,7 @@ import { useCartStore } from '../../store/cartStore'
 import { formatRp, formatDateTime, generateReceiptNumber, PLATFORM_LABELS, PAYMENT_LABELS, ORDER_TYPE_LABELS } from '../../utils/format'
 import { toast } from '../ui'
 import QRCode from 'qrcode'
+import { generateDynamicQRIS } from '../../utils/qris'
 import './Payment.css'
 
 export default function PaymentModal({ method, total, customerName, onClose }) {
@@ -14,6 +15,7 @@ export default function PaymentModal({ method, total, customerName, onClose }) {
   const [qrDataUrl, setQrDataUrl] = useState('')
   const [paid, setPaid] = useState(false)
   const [receipt, setReceipt] = useState(null)
+  const [timeLeft, setTimeLeft] = useState(600) // 10 minutes
   const receiptRef = useRef()
 
   useEffect(() => {
@@ -23,10 +25,22 @@ export default function PaymentModal({ method, total, customerName, onClose }) {
     })
   }, [method])
 
+  useEffect(() => {
+    if (method !== 'qris' || paid) return
+    if (timeLeft <= 0) return
+
+    const timer = setInterval(() => {
+      setTimeLeft(prev => prev - 1)
+    }, 1000)
+
+    return () => clearInterval(timer)
+  }, [method, timeLeft, paid])
+
   async function generateQR(s) {
-    const qrisNum = s.qrisNumber || '00020101021126570011ID.CO.BRI.WWW011893600002000000000102152000000000001020303UMI51440014ID.CO.QRIS.WWW0215ID10200000000000303UMI5204581253033605802ID5906WARUNG6007JAKARTA6105101106304'
+    const staticQR = s.qrisNumber || '00020101021126610014COM.GO-JEK.WWW01189360091438630037910210G8630037910303UMI51440014ID.CO.QRIS.WWW0215ID10254364052250303UMI5204581253033605802ID5925naqano, Makanan & Minuman6006BEKASI61051732062070703A016304CA42'
     try {
-      const url = await QRCode.toDataURL(qrisNum, { width: 220, margin: 1, color: { dark: '#000', light: '#fff' } })
+      const dynamicQR = generateDynamicQRIS(staticQR, total)
+      const url = await QRCode.toDataURL(dynamicQR, { width: 220, margin: 1, color: { dark: '#000', light: '#fff' } })
       setQrDataUrl(url)
     } catch (e) {
       console.error(e)
@@ -178,7 +192,9 @@ export default function PaymentModal({ method, total, customerName, onClose }) {
             <QRISPayment
               total={total}
               qrDataUrl={qrDataUrl}
+              timeLeft={timeLeft}
               onConfirm={() => confirmPayment('qris')}
+              onRegenerate={() => { setTimeLeft(600); generateQR(settings) }}
             />
           )}
         </div>
@@ -256,22 +272,36 @@ function TransferPayment({ total, settings, onConfirm }) {
   )
 }
 
-function QRISPayment({ total, qrDataUrl, onConfirm }) {
+function QRISPayment({ total, qrDataUrl, timeLeft, onConfirm, onRegenerate }) {
+  const formatTime = (s) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`
+  const isExpired = timeLeft <= 0
+
   return (
     <div className="qris-payment">
       <div className="payment-total-display">
-        <div className="ptd-label">Total QRIS</div>
+        <div className="ptd-label">Total QRIS (Otomatis)</div>
         <div className="ptd-amount">{formatRp(total)}</div>
       </div>
       <div className="qris-container">
-        {qrDataUrl ? (
-          <img src={qrDataUrl} alt="QRIS Code" className="qris-image" />
+        {isExpired ? (
+          <div className="qris-expired">
+            <div className="expired-icon">⚠️</div>
+            <div className="expired-text">QR Sudah Kadaluarsa</div>
+            <button className="btn btn-outline" onClick={onRegenerate}>Generate Ulang</button>
+          </div>
+        ) : qrDataUrl ? (
+          <>
+            <img src={qrDataUrl} alt="QRIS Code" className="qris-image" />
+            <div className={`qris-timer ${timeLeft < 60 ? 'text-red' : ''}`}>
+               ⏳ Berlaku dalam: <strong>{formatTime(timeLeft)}</strong>
+            </div>
+          </>
         ) : (
           <div className="qris-loading"><span className="animate-spin">⏳</span></div>
         )}
         <div className="qris-label">Scan dengan GoPay, OVO, DANA, ShopeePay, atau bank apapun</div>
       </div>
-      <button className="btn btn-amber btn-lg w-full" onClick={onConfirm}>
+      <button className="btn btn-amber btn-lg w-full" onClick={onConfirm} disabled={isExpired}>
         ✓ Konfirmasi Pembayaran Diterima
       </button>
     </div>
