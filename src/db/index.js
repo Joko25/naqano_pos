@@ -17,7 +17,7 @@ db.version(2).stores({
 db.on('populate', async () => {
   await db.settings.bulkPut([
     { key: 'shopName', value: 'Naqano Coffee' },
-    { key: 'shopAddress', value: 'Jl. Kopi Nikmat No. 1' },
+    { key: 'shopAddress', value: 'Relife Greenville Cileungsi cluster Flowerville Extension Blok HA27' },
     { key: 'shopPhone', value: '081291070705' },
     { key: 'taxPercent', value: 0 },
     { key: 'qrisNumber', value: '00020101021126610014COM.GO-JEK.WWW01189360091438630037910210G8630037910303UMI51440014ID.CO.QRIS.WWW0215ID10254364052250303UMI5204581253033605802ID5925naqano, Makanan & Minuman6006BEKASI61051732062070703A016304CA42' },
@@ -36,9 +36,9 @@ db.on('populate', async () => {
   ])
 
   await db.products.bulkAdd([
-    { name: 'Kopi Suga', category: 'Kopi', temp: 'Ice', priceDirect: 15000, priceOnline: 20000, costPrice: 7000, stock: 99, isActive: 1, emoji: '☕' },
-    { name: 'Vanilla Latte', category: 'Kopi', temp: 'Ice', priceDirect: 15000, priceOnline: 20000, costPrice: 8500, stock: 99, isActive: 1, emoji: '☕' },
-    { name: 'Vanilla Butterscoth', category: 'Kopi', temp: 'Ice', priceDirect: 15000, priceOnline: 20000, costPrice: 8500, stock: 99, isActive: 1, emoji: '☕' },
+    { name: 'Kopi Suga', category: 'Kopi', temp: 'Ice', priceDirect: 15000, priceOnline: 20000, costPrice: 7200, stock: 99, isActive: 1, emoji: '☕' },
+    { name: 'Vanilla Latte', category: 'Kopi', temp: 'Ice', priceDirect: 15000, priceOnline: 20000, costPrice: 7800, stock: 99, isActive: 1, emoji: '☕' },
+    { name: 'Vanilla Butterscoth', category: 'Kopi', temp: 'Ice', priceDirect: 15000, priceOnline: 20000, costPrice: 11000, stock: 99, isActive: 1, emoji: '☕' },
     { name: 'Spanish Latte', category: 'Kopi', temp: 'Ice', priceDirect: 15000, priceOnline: 20000, costPrice: 9000, stock: 99, isActive: 1, emoji: '☕' },
     { name: 'Butterscoth Creany Foam', category: 'Kopi', temp: 'Ice', priceDirect: 17000, priceOnline: 22000, costPrice: 10000, stock: 99, isActive: 1, emoji: '☕' },
     { name: 'Americano', category: 'Kopi', temp: 'Ice', priceDirect: 10000, priceOnline: 15000, costPrice: 4000, stock: 99, isActive: 1, emoji: '☕' },
@@ -58,8 +58,11 @@ db.on('populate', async () => {
     { name: 'Biji Kopi House Blend (1kg)', unit: 'Pcs', stock: 5, lastPrice: 165000 },
     { name: 'Gula Aren Cair (1L)', unit: 'Pcs', stock: 8, lastPrice: 45000 },
     { name: 'Sirup Vanilla (750ml)', unit: 'Pcs', stock: 3, lastPrice: 95000 },
-    { name: 'Cup Dingin 16oz', unit: 'Pcs', stock: 250, lastPrice: 600 },
+    { name: 'Cup Dingin 12oz', unit: 'Pcs', stock: 250, lastPrice: 600 },
     { name: 'Sedotan Hitam', unit: 'Pcs', stock: 500, lastPrice: 150 },
+    { name: 'Creamer', unit: 'Kg', stock: 1, lastPrice: 45000 },
+    { name: 'Es Batu', unit: 'Kg', stock: 1, lastPrice: 10000 },
+
   ])
 })
 
@@ -76,3 +79,49 @@ export async function getAllSettings() {
   const all = await db.settings.toArray()
   return Object.fromEntries(all.map(s => [s.key, s.value]))
 }
+
+/**
+ * Backup Database to JSON
+ */
+export async function exportDatabase() {
+  const tables = db.tables.map(t => t.name)
+  const result = {
+    version: db.verno,
+    timestamp: new Date().toISOString(),
+    tables: {}
+  }
+
+  for (const name of tables) {
+    result.tables[name] = await db.table(name).toArray()
+  }
+
+  return JSON.stringify(result, null, 2)
+}
+
+/**
+ * Restore Database from JSON
+ */
+export async function importDatabase(jsonString) {
+  try {
+    const backup = JSON.parse(jsonString)
+    if (!backup.tables) throw new Error('Format backup tidak valid')
+
+    // Transaction to ensure atomicity
+    await db.transaction('rw', db.tables, async () => {
+      for (const [tableName, rows] of Object.entries(backup.tables)) {
+        const table = db.table(tableName)
+        if (table) {
+          await table.clear()
+          if (rows.length > 0) {
+            await table.bulkAdd(rows)
+          }
+        }
+      }
+    })
+    return true
+  } catch (err) {
+    console.error('Import failed:', err)
+    throw err
+  }
+}
+

@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
 import {
   Image, Store, DollarSign, Building2, Smartphone,
-  AlertTriangle, Save, FolderOpen, Trash2, Receipt, Percent
+  AlertTriangle, Save, FolderOpen, Trash2, Receipt, Percent,
+  Download, Upload, RefreshCw
 } from 'lucide-react'
-import { getAllSettings, setSetting } from '../../db'
+import { getAllSettings, setSetting, exportDatabase, importDatabase } from '../../db'
 import { toast } from '../ui'
 import './Settings.css'
 
@@ -51,6 +52,44 @@ export default function Settings({ onLogoChange }) {
   function removeLogo() {
     set('shopLogo', '')
     onLogoChange?.('')
+  }
+
+  async function handleExport() {
+    try {
+      const data = await exportDatabase()
+      const blob = new Blob([data], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `backup_pos_${new Date().toISOString().split('T')[0]}.json`
+      a.click()
+      URL.revokeObjectURL(url)
+      toast.success('Backup berhasil diunduh ✅')
+    } catch (err) {
+      toast.error('Gagal mengekspor data ❌')
+    }
+  }
+
+  async function handleImport(e) {
+    const file = e.target.files[0]
+    if (!file) return
+
+    if (!confirm('Peringatan: Mengimpor data akan MENGHAPUS semua data saat ini dan menggantinya dengan data dari file backup. Lanjutkan?')) {
+      e.target.value = ''
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onload = async (ev) => {
+      try {
+        await importDatabase(ev.target.result)
+        toast.success('Data berhasil dipulihkan! Reload aplikasi... 🔄')
+        setTimeout(() => window.location.reload(), 1500)
+      } catch (err) {
+        toast.error('Gagal mengimpor file: ' + err.message)
+      }
+    }
+    reader.readAsText(file)
   }
 
   if (loading) return <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>Memuat...</div>
@@ -195,6 +234,36 @@ export default function Settings({ onLogoChange }) {
           }}>
             <Trash2 size={15} strokeWidth={2} /> Hapus Semua Data Transaksi
           </button>
+        </div>
+        {/* Database: Backup & Restore */}
+        <div className="settings-section">
+          <div className="settings-section-title"><RefreshCw size={15} strokeWidth={2} /> Database: Backup & Restore</div>
+          <div className="db-controls">
+            <div className="db-card">
+              <div className="db-icon bg-green"><Download size={18} /></div>
+              <div className="db-info">
+                <strong>Ekspor Data (Backup)</strong>
+                <p>Simpan semua data (produk, transaksi, stok) ke dalam file JSON.</p>
+              </div>
+              <button className="btn btn-outline" onClick={handleExport}>Download Backup</button>
+            </div>
+            
+            <div className="db-card">
+              <div className="db-icon bg-amber"><Upload size={18} /></div>
+              <div className="db-info">
+                <strong>Impor Data (Restore)</strong>
+                <p>Pindahkan data dari device lain. Semua data saat ini akan terhapus!</p>
+              </div>
+              <label className="btn btn-outline btn-restore" htmlFor="db-import-input">Pilih File Backup</label>
+              <input
+                 id="db-import-input"
+                 type="file"
+                 accept=".json"
+                 style={{ display: 'none' }}
+                 onChange={handleImport}
+              />
+            </div>
+          </div>
         </div>
       </div>
     </div>
