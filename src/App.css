@@ -135,7 +135,8 @@
 }
 
 @media (max-width: 600px) {
-  .pos-layout { flex-direction: column; }
-  .pos-right { width: 100%; height: 240px; }
+  .pos-layout { flex-direction: column; overflow-y: auto; }
+  .pos-left { flex: none; height: 55vh; min-height: 400px; }
+  .pos-right { width: 100%; flex: 1; min-height: 380px; border-top: 1px solid var(--border); }
   .nav-btn span:last-child { display: none; }
 }
