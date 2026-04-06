@@ -91,6 +91,7 @@ export default function PaymentModal({ method, total, customerName, onClose }) {
       shopName: settings.shopName || 'Naqano Coffee',
       shopAddress: settings.shopAddress || '',
       shopPhone: settings.shopPhone || '',
+      shopLogo: settings.shopLogo || '/logo.png',
       receiptFooter: settings.receiptFooter || 'Terima kasih!',
       items: items.map(item => ({
         name: item.name,
@@ -98,6 +99,7 @@ export default function PaymentModal({ method, total, customerName, onClose }) {
         temp: item.temp || 'None',
         qty: item.qty,
         price: orderType === 'online' ? item.priceOnline : item.priceDirect,
+        costPrice: item.costPrice || 0,
       })),
     }
 
@@ -280,6 +282,14 @@ function ReceiptContent({ receipt }) {
   return (
     <div className="receipt-body">
       <div className="receipt-header">
+        {receipt.shopLogo && (
+          <img 
+            src={receipt.shopLogo} 
+            alt="logo" 
+            className="receipt-shop-logo"
+            onError={(e) => { e.target.style.display = 'none' }}
+          />
+        )}
         <div className="receipt-shop-name">{receipt.shopName}</div>
         <div className="receipt-shop-address">{receipt.shopAddress}</div>
         {receipt.shopPhone && <div className="receipt-shop-phone">{receipt.shopPhone}</div>}

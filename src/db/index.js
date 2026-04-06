@@ -24,6 +24,7 @@ db.on('populate', async () => {
     { key: 'bankName', value: 'BCA' },
     { key: 'bankAccount', value: '5211464187' },
     { key: 'bankHolder', value: 'Nur Hasanah' },
+    { key: 'shopLogo', value: '/logo.png' },
     { key: 'receiptFooter', value: 'Terima kasih sudah berkunjung! ☕' },
   ])
 
