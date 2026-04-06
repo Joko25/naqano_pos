@@ -83,6 +83,7 @@ export default function PaymentModal({ method, total, customerName, onClose }) {
       temp: item.temp || 'None',
       qty: item.qty,
       price: orderType === 'online' ? item.priceOnline : item.priceDirect,
+      costPrice: item.costPrice || 0,
     })))
 
     const receiptData = {

@@ -6,6 +6,7 @@ import {
 import POSView from './components/POS/POSView'
 import Cart from './components/Cart/Cart'
 import Products from './components/Products/Products'
+import Inventory from './components/Inventory/Inventory'
 import Reports from './components/Reports/Reports'
 import SettingsPage from './components/Settings/Settings'
 import { Toast } from './components/ui'
@@ -14,10 +15,11 @@ import { useCartStore } from './store/cartStore'
 import './App.css'
 
 const NAV_ITEMS = [
-  { id: 'pos',      label: 'Kasir',      Icon: ShoppingCart },
-  { id: 'products', label: 'Produk',     Icon: Package },
-  { id: 'reports',  label: 'Laporan',    Icon: BarChart2 },
-  { id: 'settings', label: 'Pengaturan', Icon: Settings },
+  { id: 'pos',       label: 'Kasir',      Icon: ShoppingCart },
+  { id: 'products',  label: 'Produk',     Icon: Package },
+  { id: 'inventory', label: 'Bahan',      Icon: Coffee },
+  { id: 'reports',   label: 'Laporan',    Icon: BarChart2 },
+  { id: 'settings',  label: 'Pengaturan', Icon: Settings },
 ]
 
 export default function App() {
@@ -118,6 +120,7 @@ export default function App() {
             )
           }
           if (page === 'products') return <Products />
+          if (page === 'inventory') return <Inventory />
           if (page === 'reports') return <Reports />
           return <SettingsPage onLogoChange={setShopLogo} />
         })()}

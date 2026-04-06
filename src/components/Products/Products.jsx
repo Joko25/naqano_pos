@@ -98,6 +98,7 @@ export default function Products() {
                 <th>Kategori</th>
                 <th>Harga Langsung</th>
                 <th>Harga Online</th>
+                <th>Margin</th>
                 <th>Status</th>
                 <th>Aksi</th>
               </tr>
@@ -119,6 +120,14 @@ export default function Products() {
                   <td><span className="badge badge-amber">{p.category}</span></td>
                   <td className="price-cell">{formatRp(p.priceDirect)}</td>
                   <td className="price-cell price-online">{formatRp(p.priceOnline)}</td>
+                  <td>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>M: {formatRp(p.costPrice || 0)}</span>
+                      <span className={`badge ${((p.priceDirect - (p.costPrice || 0)) / (p.priceDirect || 1)) > 0.4 ? 'badge-green' : 'badge-amber'}`} style={{ fontSize: '10px' }}>
+                        {Math.round(((p.priceDirect - (p.costPrice || 0)) / (p.priceDirect || 1)) * 100)}% Margin
+                      </span>
+                    </div>
+                  </td>
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                       <span className={`badge ${p.isActive ? 'badge-green' : 'badge-red'}`} style={{ minWidth: '75px', justifyContent: 'center' }}>
@@ -164,12 +173,12 @@ export default function Products() {
 }
 
 function ProductFormModal({ open, onClose, onSave, initial }) {
-  const empty = { name: '', category: 'Kopi', temp: 'None', priceDirect: '', priceOnline: '', emoji: '☕', isActive: 1 }
+  const empty = { name: '', category: 'Kopi', temp: 'None', priceDirect: '', priceOnline: '', costPrice: '', emoji: '☕', isActive: 1 }
   const [form, setForm] = useState(empty)
 
   useEffect(() => {
     if (initial) {
-      setForm({ ...initial, priceDirect: String(initial.priceDirect), priceOnline: String(initial.priceOnline) })
+      setForm({ ...initial, priceDirect: String(initial.priceDirect), priceOnline: String(initial.priceOnline), costPrice: String(initial.costPrice || '') })
     } else {
       setForm(empty)
     }
@@ -252,6 +261,11 @@ function ProductFormModal({ open, onClose, onSave, initial }) {
             <label className="input-label" htmlFor="prod-price-o">🛵 Harga Online (GoFood/dll)</label>
             <input id="prod-price-o" className="input" type="number" value={form.priceOnline} onChange={e => set('priceOnline', e.target.value)} placeholder="27000" />
           </div>
+        </div>
+
+        <div className="input-group">
+          <label className="input-label" htmlFor="prod-cost">💰 Harga Modal (HPP)</label>
+          <input id="prod-cost" className="input" type="number" value={form.costPrice} onChange={e => set('costPrice', e.target.value)} placeholder="8000" />
         </div>
 
         {form.priceDirect && form.priceOnline && (

@@ -10,6 +10,7 @@ import './Reports.css'
 export default function Reports() {
   const [period, setPeriod] = useState('today')
   const [txs, setTxs] = useState([])
+  const [expenses, setExpenses] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => { loadData() }, [period])
@@ -27,6 +28,10 @@ export default function Reports() {
     }
     const all = await db.transactions.toArray()
     const filtered = all.filter(t => new Date(t.createdAt) >= from)
+
+    const allEx = await db.expenses.toArray()
+    const filteredEx = allEx.filter(e => new Date(e.date) >= from)
+    setExpenses(filteredEx)
 
     // Load items for each transaction
     const ids = filtered.map(t => t.id)
@@ -77,6 +82,11 @@ export default function Reports() {
   const grabfoodRev = txs.filter(t => t.platform === 'grabfood').reduce((s, t) => s + t.total, 0)
   const shopeefoodRev = txs.filter(t => t.platform === 'shopeefood').reduce((s, t) => s + t.total, 0)
 
+  // Profit Loss Calc
+  const totalHPP = txs.reduce((s, t) => s + (t.items || []).reduce((is, item) => is + (item.costPrice || 0) * item.qty, 0), 0)
+  const totalEx = expenses.reduce((s, e) => s + e.amount, 0)
+  const netProfit = totalRevenue - totalHPP - totalEx
+
   return (
     <div className="reports-page">
       <div className="reports-header">
@@ -98,27 +108,55 @@ export default function Reports() {
       {loading ? (
         <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>
           <Loader2 size={28} strokeWidth={1.5} className="animate-spin" style={{ margin: '0 auto 12px' }} />
-          <div>Memuat data...</div>
+          Memuat data laporan...
         </div>
       ) : (
         <div className="reports-content">
-          {/* KPI Cards */}
-          <div className="kpi-grid">
-            <div className="kpi-card">
-              <div className="kpi-label">Total Pendapatan</div>
-              <div className="kpi-value amber">{formatRp(totalRevenue)}</div>
+          <div className="reports-main">
+            {/* Profit & Loss Card */}
+            <div className="report-card full-width pl-dashboard">
+              <div className="report-card-title">💵 Ringkasan Laba Rugi</div>
+              <div className="pl-grid">
+                <div className="pl-item">
+                  <span className="pl-label">Total Omzet</span>
+                  <span className="pl-value text-tosca">{formatRp(totalRevenue)}</span>
+                </div>
+                <div className="pl-item">
+                  <span className="pl-label">Total HPP</span>
+                  <span className="pl-value text-red">-{formatRp(totalHPP)}</span>
+                </div>
+                <div className="pl-item">
+                  <span className="pl-label">Operational (Beban)</span>
+                  <span className="pl-value text-amber">-{formatRp(totalEx)}</span>
+                </div>
+                <div className="pl-divider" />
+                <div className="pl-item pl-total">
+                  <span className="pl-label">Laba Bersih</span>
+                  <span className={`pl-value ${netProfit >= 0 ? 'text-green' : 'text-red'}`}>{formatRp(netProfit)}</span>
+                </div>
+              </div>
             </div>
-            <div className="kpi-card">
-              <div className="kpi-label">Total Transaksi</div>
-              <div className="kpi-value">{totalTx}</div>
+
+            <div className="stats-grid">
+              <div className="report-card stat-card">
+                <div className="stat-label">Total Transaksi</div>
+                <div className="stat-value">{totalTx} <small>Pesanan</small></div>
+              </div>
+              <div className="report-card stat-card">
+                <div className="stat-label">Rata-rata / Tiket</div>
+                <div className="stat-value">{formatRp(totalTx > 0 ? totalRevenue / totalTx : 0)}</div>
+              </div>
             </div>
-            <div className="kpi-card">
-              <div className="kpi-label">🧍 Langsung</div>
-              <div className="kpi-value green">{formatRp(directRevenue)}</div>
-            </div>
-            <div className="kpi-card">
-              <div className="kpi-label">🛵 Ojek Online</div>
-              <div className="kpi-value blue">{formatRp(onlineRevenue)}</div>
+
+            <div className="kpi-grid">
+              <div className="kpi-card">
+                <div className="kpi-label">🧍 Langsung</div>
+                <div className="kpi-value green">{formatRp(directRevenue)}</div>
+              </div>
+              <div className="kpi-card">
+                <div className="kpi-label">🛵 Ojek Online</div>
+                <div className="kpi-value blue">{formatRp(onlineRevenue)}</div>
+              </div>
             </div>
           </div>
 
