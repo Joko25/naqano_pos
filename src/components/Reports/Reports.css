@@ -71,4 +71,13 @@
   .kpi-grid { grid-template-columns: 1fr 1fr; }
   .reports-grid { grid-template-columns: 1fr; }
   .report-card.full-width { grid-column: 1; }
+  
+  .pl-grid { 
+    display: grid; 
+    grid-template-columns: 1fr 1fr; 
+    gap: 16px; 
+  }
+  .pl-divider { display: none; }
+  .pl-total { grid-column: 1 / -1; border-top: 1px solid var(--border); padding-top: 12px; }
+  .pl-total .pl-value { font-size: 20px; }
 }
