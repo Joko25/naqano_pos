@@ -9,28 +9,42 @@ import './Reports.css'
 
 export default function Reports() {
   const [period, setPeriod] = useState('today')
+  const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0])
+  const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0])
   const [txs, setTxs] = useState([])
   const [expenses, setExpenses] = useState([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => { loadData() }, [period])
+  useEffect(() => { loadData() }, [period, startDate, endDate])
 
   async function loadData() {
     setLoading(true)
     const now = new Date()
-    let from
+    let from, to
     if (period === 'today') {
       from = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      to = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999)
     } else if (period === 'week') {
       from = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-    } else {
+      to = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999)
+    } else if (period === 'month') {
       from = new Date(now.getFullYear(), now.getMonth(), 1)
+      to = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999)
+    } else {
+      from = new Date(startDate)
+      from.setHours(0, 0, 0, 0)
+      to = new Date(endDate)
+      to.setHours(23, 59, 59, 999)
     }
-    const all = await db.transactions.toArray()
-    const filtered = all.filter(t => new Date(t.createdAt) >= from)
+    const filtered = await db.transactions
+      .where('createdAt')
+      .between(from.toISOString(), to.toISOString(), true, true)
+      .toArray()
 
-    const allEx = await db.expenses.toArray()
-    const filteredEx = allEx.filter(e => new Date(e.date) >= from)
+    const filteredEx = await db.expenses
+      .where('date')
+      .between(from.toISOString().split('T')[0], to.toISOString().split('T')[0], true, true)
+      .toArray()
     setExpenses(filteredEx)
 
     // Load items for each transaction
@@ -95,10 +109,27 @@ export default function Reports() {
         </h2>
         <div className="reports-actions">
           <div className="period-tabs">
-            {[['today', 'Hari Ini'], ['week', '7 Hari'], ['month', 'Bulan Ini']].map(([v, l]) => (
+            {[['today', 'Hari Ini'], ['week', '7 Hari'], ['month', 'Bulan Ini'], ['custom', 'Kustom']].map(([v, l]) => (
               <button key={v} className={`filter-tab ${period === v ? 'active' : ''}`} onClick={() => setPeriod(v)}>{l}</button>
             ))}
           </div>
+          {period === 'custom' && (
+            <div className="date-range-picker">
+              <input 
+                type="date" 
+                className="date-input" 
+                value={startDate} 
+                onChange={(e) => setStartDate(e.target.value)} 
+              />
+              <span className="date-separator">s/d</span>
+              <input 
+                type="date" 
+                className="date-input" 
+                value={endDate} 
+                onChange={(e) => setEndDate(e.target.value)} 
+              />
+            </div>
+          )}
           <button className="btn btn-outline btn-sm" onClick={exportCSV}>
             <Download size={14} strokeWidth={2} /> Export CSV
           </button>
