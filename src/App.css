@@ -126,7 +126,8 @@
 /* Non-POS pages */
 .main-content > :not(.pos-layout) {
   flex: 1;
-  overflow: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 @media (max-width: 768px) {

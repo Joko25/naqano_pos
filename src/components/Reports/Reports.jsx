@@ -1,21 +1,37 @@
 import { useState, useEffect } from 'react'
 import { db } from '../../db'
-import { formatRp, PLATFORM_LABELS, PAYMENT_LABELS, ORDER_TYPE_LABELS } from '../../utils/format'
+import { formatRp, PLATFORM_LABELS, PAYMENT_LABELS, ORDER_TYPE_LABELS, ORDER_STATUS_LABELS } from '../../utils/format'
 import {
   BarChart2, Download, Trophy, CreditCard, Bike,
-  User, FileText, Loader2
+  User, FileText, Loader2, PieChart, Clock, List, TrendingUp,
+  ChevronLeft, ChevronRight
 } from 'lucide-react'
 import './Reports.css'
 
+const toDateStr = (date) => {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
 export default function Reports() {
   const [period, setPeriod] = useState('today')
-  const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0])
-  const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0])
+  const [activeTab, setActiveTab] = useState('overview')
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 20
+  const [startDate, setStartDate] = useState(toDateStr(new Date()))
+  const [endDate, setEndDate] = useState(toDateStr(new Date()))
   const [txs, setTxs] = useState([])
   const [expenses, setExpenses] = useState([])
+  const [categories, setCategories] = useState([])
+  const [prevTxs, setPrevTxs] = useState([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => { loadData() }, [period, startDate, endDate])
+  useEffect(() => { 
+    loadData()
+    setCurrentPage(1)
+  }, [period, startDate, endDate, activeTab])
 
   async function loadData() {
     setLoading(true)
@@ -31,10 +47,10 @@ export default function Reports() {
       from = new Date(now.getFullYear(), now.getMonth(), 1)
       to = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999)
     } else {
-      from = new Date(startDate)
-      from.setHours(0, 0, 0, 0)
-      to = new Date(endDate)
-      to.setHours(23, 59, 59, 999)
+      const [sy, sm, sd] = startDate.split('-').map(Number)
+      from = new Date(sy, sm - 1, sd, 0, 0, 0, 0)
+      const [ey, em, ed] = endDate.split('-').map(Number)
+      to = new Date(ey, em - 1, ed, 23, 59, 59, 999)
     }
     const filtered = await db.transactions
       .where('createdAt')
@@ -43,14 +59,40 @@ export default function Reports() {
 
     const filteredEx = await db.expenses
       .where('date')
-      .between(from.toISOString().split('T')[0], to.toISOString().split('T')[0], true, true)
+      .between(toDateStr(from), toDateStr(to), true, true)
       .toArray()
     setExpenses(filteredEx)
+
+    const cats = await db.categories.toArray()
+    setCategories(cats)
+
+    const prods = await db.products.toArray()
+    const productMap = {}
+    prods.forEach(p => { productMap[p.id] = p })
 
     // Load items for each transaction
     const ids = filtered.map(t => t.id)
     const items = await db.transactionItems.where('transactionId').anyOf(ids).toArray()
-    const txWithItems = filtered.map(t => ({ ...t, items: items.filter(i => i.transactionId === t.id) }))
+    
+    const txWithItems = filtered.map(t => ({ 
+      ...t, 
+      items: items.filter(i => i.transactionId === t.id).map(i => ({
+        ...i,
+        category: productMap[i.productId]?.category || 'Lainnya'
+      }))
+    }))
+    // Calculate Previous Period for Growth
+    let prevFrom, prevTo
+    const diff = to.getTime() - from.getTime()
+    prevFrom = new Date(from.getTime() - diff - 1)
+    prevTo = new Date(from.getTime() - 1)
+
+    const prevFiltered = await db.transactions
+      .where('createdAt')
+      .between(prevFrom.toISOString(), prevTo.toISOString(), true, true)
+      .toArray()
+    setPrevTxs(prevFiltered)
+
     setTxs(txWithItems)
     setLoading(false)
   }
@@ -72,14 +114,19 @@ export default function Reports() {
     a.href = url; a.download = `laporan-${period}-${Date.now()}.csv`; a.click()
   }
 
-  const totalRevenue = txs.reduce((s, t) => s + t.total, 0)
-  const totalTx = txs.length
-  const directRevenue = txs.filter(t => t.orderType === 'direct').reduce((s, t) => s + t.total, 0)
-  const onlineRevenue = txs.filter(t => t.orderType === 'online').reduce((s, t) => s + t.total, 0)
+  const deliveredTxs = txs.filter(t => t.status === 'delivered')
+  const unpaidTxs = txs.filter(t => t.status === 'waiting_payment' || t.status === 'on_process')
+  
+  const totalRevenue = deliveredTxs.reduce((s, t) => s + t.total, 0)
+  const unpaidRevenue = unpaidTxs.reduce((s, t) => s + t.total, 0)
+  const totalTx = deliveredTxs.length
+  
+  const directRevenue = deliveredTxs.filter(t => t.orderType === 'direct').reduce((s, t) => s + t.total, 0)
+  const onlineRevenue = deliveredTxs.filter(t => t.orderType === 'online').reduce((s, t) => s + t.total, 0)
 
-  // Top products
+  // Top products (from finished orders only)
   const productMap = {}
-  txs.forEach(t => (t.items || []).forEach(i => {
+  deliveredTxs.forEach(t => (t.items || []).forEach(i => {
     if (!productMap[i.name]) productMap[i.name] = { name: i.name, emoji: i.emoji, qty: 0, revenue: 0 }
     productMap[i.name].qty += i.qty
     productMap[i.name].revenue += i.price * i.qty
@@ -87,19 +134,83 @@ export default function Reports() {
   const topProducts = Object.values(productMap).sort((a, b) => b.qty - a.qty).slice(0, 5)
 
   // Payment breakdown
-  const cashTx = txs.filter(t => t.paymentMethod === 'cash')
-  const transferTx = txs.filter(t => t.paymentMethod === 'transfer')
-  const qrisTx = txs.filter(t => t.paymentMethod === 'qris')
+  const cashTx = deliveredTxs.filter(t => t.paymentMethod === 'cash')
+  const transferTx = deliveredTxs.filter(t => t.paymentMethod === 'transfer')
+  const qrisTx = deliveredTxs.filter(t => t.paymentMethod === 'qris')
 
   // Platform breakdown
-  const gofoodRev = txs.filter(t => t.platform === 'gofood').reduce((s, t) => s + t.total, 0)
-  const grabfoodRev = txs.filter(t => t.platform === 'grabfood').reduce((s, t) => s + t.total, 0)
-  const shopeefoodRev = txs.filter(t => t.platform === 'shopeefood').reduce((s, t) => s + t.total, 0)
+  const gofoodRev = deliveredTxs.filter(t => t.platform === 'gofood').reduce((s, t) => s + t.total, 0)
+  const grabfoodRev = deliveredTxs.filter(t => t.platform === 'grabfood').reduce((s, t) => s + t.total, 0)
+  const shopeefoodRev = deliveredTxs.filter(t => t.platform === 'shopeefood').reduce((s, t) => s + t.total, 0)
 
   // Profit Loss Calc
-  const totalHPP = txs.reduce((s, t) => s + (t.items || []).reduce((is, item) => is + (item.costPrice || 0) * item.qty, 0), 0)
+  const totalHPP = deliveredTxs.reduce((s, t) => s + (t.items || []).reduce((is, item) => is + (item.costPrice || 0) * item.qty, 0), 0)
   const totalEx = expenses.reduce((s, e) => s + e.amount, 0)
-  const netProfit = totalRevenue - totalHPP - totalEx
+  const grossProfit = totalRevenue - totalHPP
+  const netProfit = grossProfit - totalEx
+
+  // Advanced Analytics
+  const productPerformance = {}
+  const categoryPerformance = {}
+  const hourMap = new Array(24).fill(0).map((_, i) => ({ hour: i, count: 0, revenue: 0 }))
+  const dayMap = {}
+
+  txs.forEach(t => {
+    // Peak Hours
+    const h = new Date(t.createdAt).getHours()
+    hourMap[h].count++
+    hourMap[h].revenue += t.total
+
+    // Daily trends
+    const day = toDateStr(new Date(t.createdAt))
+    if (!dayMap[day]) dayMap[day] = { date: day, revenue: 0, count: 0 }
+    dayMap[day].revenue += t.total
+    dayMap[day].count++
+
+    // Items
+    (t.items || []).forEach(i => {
+      // Product
+      if (!productPerformance[i.productId]) {
+        productPerformance[i.productId] = { name: i.name, emoji: i.emoji, qty: 0, revenue: 0, profit: 0 }
+      }
+      const p = productPerformance[i.productId]
+      p.qty += i.qty
+      p.revenue += i.price * i.qty
+      p.profit += (i.price - (i.costPrice || 0)) * i.qty
+      p.margin = p.revenue > 0 ? (p.profit / p.revenue) * 100 : 0
+
+      // Category
+      const cat = i.category || 'Lainnya'
+      if (!categoryPerformance[cat]) categoryPerformance[cat] = { name: cat, revenue: 0, qty: 0 }
+      categoryPerformance[cat].revenue += i.price * i.qty
+      categoryPerformance[cat].qty += i.qty
+    })
+  })
+
+  const topPerformance = Object.values(productPerformance).sort((a,b) => b.revenue - a.revenue)
+  const catList = Object.values(categoryPerformance).sort((a,b) => b.revenue - a.revenue)
+  const peakHours = [...hourMap].sort((a,b) => b.count - a.count).slice(0, 5)
+  const dailyTrends = Object.values(dayMap).sort((a,b) => a.date.localeCompare(b.date))
+
+  // Loyalty
+  const customerMap = {}
+  txs.forEach(t => {
+    if (t.customerName) {
+      if (!customerMap[t.customerName]) customerMap[t.customerName] = { name: t.customerName, count: 0, total: 0 }
+      customerMap[t.customerName].count++
+      customerMap[t.customerName].total += t.total
+    }
+  })
+  const topCustomers = Object.values(customerMap).sort((a,b) => b.total - a.total).slice(0, 5)
+
+  // Growth calc
+  const prevRevenue = prevTxs.reduce((s,t) => s + t.total, 0)
+  const revenueGrowth = prevRevenue > 0 ? ((totalRevenue - prevRevenue) / prevRevenue) * 100 : 0
+
+  // Pagination for History
+  const historyTxs = [...txs].reverse()
+  const totalPages = Math.ceil(historyTxs.length / itemsPerPage)
+  const paginatedTxs = historyTxs.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
   return (
     <div className="reports-page">
@@ -143,152 +254,326 @@ export default function Reports() {
         </div>
       ) : (
         <div className="reports-content">
-          <div className="reports-main">
-            {/* Profit & Loss Card */}
-            <div className="report-card full-width pl-dashboard">
-              <div className="report-card-title">💵 Ringkasan Laba Rugi</div>
-              <div className="pl-grid">
-                <div className="pl-item">
-                  <span className="pl-label">Total Omzet</span>
-                  <span className="pl-value text-tosca">{formatRp(totalRevenue)}</span>
-                </div>
-                <div className="pl-item">
-                  <span className="pl-label">Total HPP</span>
-                  <span className="pl-value text-red">-{formatRp(totalHPP)}</span>
-                </div>
-                <div className="pl-item">
-                  <span className="pl-label">Operational (Beban)</span>
-                  <span className="pl-value text-amber">-{formatRp(totalEx)}</span>
-                </div>
-                <div className="pl-divider" />
-                <div className="pl-item pl-total">
-                  <span className="pl-label">Laba Bersih</span>
-                  <span className={`pl-value ${netProfit >= 0 ? 'text-green' : 'text-red'}`}>{formatRp(netProfit)}</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="stats-grid">
-              <div className="report-card stat-card">
-                <div className="stat-label">Total Transaksi</div>
-                <div className="stat-value">{totalTx} <small>Pesanan</small></div>
-              </div>
-              <div className="report-card stat-card">
-                <div className="stat-label">Rata-rata / Tiket</div>
-                <div className="stat-value">{formatRp(totalTx > 0 ? totalRevenue / totalTx : 0)}</div>
-              </div>
-            </div>
-
-            <div className="kpi-grid">
-              <div className="kpi-card">
-                <div className="kpi-label">🧍 Langsung</div>
-                <div className="kpi-value green">{formatRp(directRevenue)}</div>
-              </div>
-              <div className="kpi-card">
-                <div className="kpi-label">🛵 Ojek Online</div>
-                <div className="kpi-value blue">{formatRp(onlineRevenue)}</div>
-              </div>
+          <div className="report-tabs-wrapper">
+            <div className="tabs report-type-tabs">
+              <button className={`tab-btn ${activeTab === 'overview' ? 'active' : ''}`} onClick={() => setActiveTab('overview')}>
+                <BarChart2 size={14} /> Ringkasan
+              </button>
+              <button className={`tab-btn ${activeTab === 'products' ? 'active' : ''}`} onClick={() => setActiveTab('products')}>
+                <PieChart size={14} /> Produk & Kategori
+              </button>
+              <button className={`tab-btn ${activeTab === 'time' ? 'active' : ''}`} onClick={() => setActiveTab('time')}>
+                <Clock size={14} /> Jam & Tren
+              </button>
+              <button className={`tab-btn ${activeTab === 'history' ? 'active' : ''}`} onClick={() => setActiveTab('history')}>
+                <List size={14} /> Riwayat
+              </button>
             </div>
           </div>
 
-          <div className="reports-grid">
-            {/* Top Products */}
-            <div className="report-card">
-              <div className="report-card-title">
-                <Trophy size={15} strokeWidth={2} /> Produk Terlaris
-              </div>
-              {topProducts.length === 0 ? (
-                <div className="report-empty">Belum ada data</div>
-              ) : (
-                <div className="top-products">
-                  {topProducts.map((p, i) => (
-                    <div key={p.name} className="top-product-row">
-                      <span className="rank">#{i + 1}</span>
-                      <span className="tp-emoji">{p.emoji || '☕'}</span>
-                      <span className="tp-name">{p.name}</span>
-                      <span className="tp-qty">{p.qty}x</span>
-                      <span className="tp-rev">{formatRp(p.revenue)}</span>
+          {activeTab === 'overview' && (
+            <div className="reports-tab-content">
+              <div className="reports-main-view">
+                <div className="reports-main">
+                  {/* Profit & Loss Card */}
+                  <div className="report-card full-width pl-dashboard">
+                    <div className="report-card-title">💵 Ringkasan Laba Rugi</div>
+                    <div className="pl-grid">
+                      <div className="pl-item">
+                        <span className="pl-label">Total Omzet</span>
+                        <div className="flex items-center gap-2">
+                          <span className="pl-value text-tosca">{formatRp(totalRevenue)}</span>
+                          {prevRevenue > 0 && (
+                            <span className={`growth-badge ${revenueGrowth >= 0 ? 'up' : 'down'}`}>
+                              {revenueGrowth >= 0 ? '↑' : '↓'} {Math.abs(revenueGrowth).toFixed(0)}%
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="pl-item">
+                        <span className="pl-label">Total HPP</span>
+                        <span className="pl-value text-red">-{formatRp(totalHPP)}</span>
+                      </div>
+                      <div className="pl-item">
+                        <span className="pl-label">Laba Kotor</span>
+                        <span className="pl-value text-blue">{formatRp(grossProfit)}</span>
+                      </div>
+                      <div className="pl-item">
+                        <span className="pl-label">Operational (Beban)</span>
+                        <span className="pl-value text-amber">-{formatRp(totalEx)}</span>
+                      </div>
+                      <div className="pl-divider" />
+                      <div className="pl-item pl-total">
+                        <span className="pl-label">Laba Bersih</span>
+                        <span className={`pl-value ${netProfit >= 0 ? 'text-green' : 'text-red'}`}>{formatRp(netProfit)}</span>
+                      </div>
                     </div>
-                  ))}
+                  </div>
+
+                  <div className="stats-grid">
+                    <div className="report-card stat-card">
+                      <div className="stat-label">Total Transaksi</div>
+                      <div className="stat-value">{totalTx} <small>Pesanan</small></div>
+                    </div>
+                    <div className="report-card stat-card">
+                      <div className="stat-label">Rata-rata / Tiket</div>
+                      <div className="stat-value">{formatRp(totalTx > 0 ? totalRevenue / totalTx : 0)}</div>
+                    </div>
+                    <div className="report-card stat-card">
+                      <div className="stat-label">Piutang (Belum Bayar)</div>
+                      <div className="stat-value text-red">{formatRp(unpaidRevenue)}</div>
+                    </div>
+                  </div>
+
+                  <div className="kpi-grid">
+                    <div className="kpi-card">
+                      <div className="kpi-label">🧍 Langsung</div>
+                      <div className="kpi-value green">{formatRp(directRevenue)}</div>
+                    </div>
+                    <div className="kpi-card">
+                      <div className="kpi-label">🛵 Ojek Online</div>
+                      <div className="kpi-value blue">{formatRp(onlineRevenue)}</div>
+                    </div>
+                  </div>
                 </div>
-              )}
+
+                <div className="reports-grid">
+                  {/* Top Products Quick View */}
+                  <div className="report-card">
+                    <div className="report-card-title">
+                      <Trophy size={15} strokeWidth={2} /> Produk Terlaris
+                    </div>
+                    {topProducts.length === 0 ? (
+                      <div className="report-empty">Belum ada data</div>
+                    ) : (
+                      <div className="top-products">
+                        {topProducts.map((p, i) => (
+                          <div key={p.name} className="top-product-row">
+                            <span className="rank">#{i + 1}</span>
+                            <span className="tp-emoji">{p.emoji || '☕'}</span>
+                            <span className="tp-name">{p.name}</span>
+                            <span className="tp-qty">{p.qty}x</span>
+                            <span className="tp-rev">{formatRp(p.revenue)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Payment Breakdown */}
+                  <div className="report-card">
+                    <div className="report-card-title">
+                      <CreditCard size={15} strokeWidth={2} /> Metode Pembayaran
+                    </div>
+                    <div className="breakdown-list">
+                      <BreakdownRow label="💵 Tunai" count={cashTx.length} amount={cashTx.reduce((s,t)=>s+t.total,0)} color="green" />
+                      <BreakdownRow label="🏦 Transfer" count={transferTx.length} amount={transferTx.reduce((s,t)=>s+t.total,0)} color="blue" />
+                      <BreakdownRow label="📱 QRIS" count={qrisTx.length} amount={qrisTx.reduce((s,t)=>s+t.total,0)} color="amber" />
+                    </div>
+                  </div>
+
+                  {/* Loyalty Card */}
+                  <div className="report-card">
+                    <div className="report-card-title">
+                      <User size={15} strokeWidth={2} /> Pelanggan Loyal
+                    </div>
+                    {topCustomers.length === 0 ? (
+                      <div className="report-empty">Belum ada data pelanggan</div>
+                    ) : (
+                      <div className="breakdown-list">
+                        {topCustomers.map(c => (
+                          <div key={c.name} className="breakdown-row">
+                            <span className="bd-label">{c.name}</span>
+                            <span className="bd-count">{c.count}x jajan</span>
+                            <span className="bd-amount text-tosca">{formatRp(c.total)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
+          )}
 
-            {/* Payment Breakdown */}
-            <div className="report-card">
-              <div className="report-card-title">
-                <CreditCard size={15} strokeWidth={2} /> Metode Pembayaran
-              </div>
-              <div className="breakdown-list">
-                <BreakdownRow label="💵 Tunai" count={cashTx.length} amount={cashTx.reduce((s,t)=>s+t.total,0)} color="green" />
-                <BreakdownRow label="🏦 Transfer" count={transferTx.length} amount={transferTx.reduce((s,t)=>s+t.total,0)} color="blue" />
-                <BreakdownRow label="📱 QRIS" count={qrisTx.length} amount={qrisTx.reduce((s,t)=>s+t.total,0)} color="amber" />
-              </div>
-            </div>
-
-            {/* Platform Breakdown */}
-            {onlineRevenue > 0 && (
-              <div className="report-card">
-                <div className="report-card-title">
-                  <Bike size={15} strokeWidth={2} /> Platform Online
+          {activeTab === 'products' && (
+            <div className="reports-tab-content">
+              <div className="reports-grid">
+                <div className="report-card">
+                  <div className="report-card-title"><PieChart size={16} /> Performa Kategori</div>
+                  <div className="breakdown-list">
+                    {catList.map(c => (
+                      <div key={c.name} className="breakdown-row">
+                        <span className="bd-label text-semibold">{c.name}</span>
+                        <span className="bd-count">{c.qty} item</span>
+                        <span className="bd-amount text-tosca">{formatRp(c.revenue)}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div className="breakdown-list">
-                  <BreakdownRow label="🟥 GoFood" count={txs.filter(t=>t.platform==='gofood').length} amount={gofoodRev} color="red" />
-                  <BreakdownRow label="🟩 GrabFood" count={txs.filter(t=>t.platform==='grabfood').length} amount={grabfoodRev} color="green" />
-                  <BreakdownRow label="🟧 ShopeeFood" count={txs.filter(t=>t.platform==='shopeefood').length} amount={shopeefoodRev} color="amber" />
+                <div className="report-card">
+                  <div className="report-card-title"><TrendingUp size={16} /> Insight Margin</div>
+                  <div className="report-info-box">
+                    Menampilkan produk dengan profit margin tertinggi.
+                  </div>
+                  <div className="top-products">
+                    {topPerformance.slice(0, 5).map(p => (
+                      <div key={p.name} className="top-product-row">
+                        <span className="tp-emoji">{p.emoji}</span>
+                        <span className="tp-name">{p.name}</span>
+                        <span className="tp-rev text-green" style={{ minWidth: 60 }}>{p.margin.toFixed(1)}%</span>
+                        <span className="tp-rev">{formatRp(p.profit)}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-            )}
 
-            {/* Recent Transactions */}
-            <div className="report-card full-width">
-              <div className="report-card-title">
-                <FileText size={15} strokeWidth={2} /> Riwayat Transaksi
-              </div>
-              {txs.length === 0 ? (
-                <div className="report-empty">Belum ada transaksi di periode ini</div>
-              ) : (
+              <div className="report-card full-width">
+                <div className="report-card-title"><Trophy size={16} /> Detail Profitabilitas Produk</div>
                 <div style={{ overflowX: 'auto' }}>
                   <table className="table">
                     <thead>
                       <tr>
-                        <th>No Struk</th>
-                        <th>Waktu</th>
-                        <th>Pelanggan</th>
-                        <th>Tipe</th>
-                        <th>Bayar</th>
-                        <th>Total</th>
+                        <th>Produk</th>
+                        <th>Terjual</th>
+                        <th>Omzet</th>
+                        <th>Profit</th>
+                        <th>Margin</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {[...txs].reverse().slice(0, 20).map(t => (
-                        <tr key={t.id}>
-                          <td><code style={{ fontSize: 11 }}>{t.receiptNo}</code></td>
-                          <td style={{ fontSize: 12, color: 'var(--text-muted)' }}>{new Date(t.createdAt).toLocaleString('id-ID')}</td>
+                      {topPerformance.map(p => (
+                        <tr key={p.name}>
+                          <td className="text-semibold">{p.emoji} {p.name}</td>
+                          <td>{p.qty}x</td>
+                          <td>{formatRp(p.revenue)}</td>
+                          <td className="text-green">{formatRp(p.profit)}</td>
                           <td>
-                            {t.customerName ? (
-                              <span className="customer-chip">
-                                <User size={11} strokeWidth={2} /> {t.customerName}
-                              </span>
-                            ) : (
-                              <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>—</span>
-                            )}
+                            <div className="margin-bar-wrap">
+                              <div className="margin-bar" style={{ width: `${p.margin}%` }}></div>
+                              <span>{p.margin.toFixed(0)}%</span>
+                            </div>
                           </td>
-                          <td>
-                            <span className={`badge ${t.orderType === 'online' ? 'badge-blue' : 'badge-amber'}`}>
-                              {t.orderType === 'online' ? '🛵' : '🧍'} {t.platform ? PLATFORM_LABELS[t.platform] : ORDER_TYPE_LABELS[t.orderType]}
-                            </span>
-                          </td>
-                          <td><span className="badge badge-green">{PAYMENT_LABELS[t.paymentMethod]}</span></td>
-                          <td style={{ fontWeight: 700, color: 'var(--amber)' }}>{formatRp(t.total)}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
-              )}
+              </div>
             </div>
-          </div>
+          )}
+
+          {activeTab === 'time' && (
+            <div className="reports-tab-content">
+              <div className="reports-grid">
+                <div className="report-card">
+                  <div className="report-card-title"><Clock size={16} /> Jam Sibuk (Peak Hours)</div>
+                  <div className="peak-hours-list">
+                    {peakHours.map((h, i) => (
+                      <div key={h.hour} className="peak-hour-row">
+                        <span className="rank">#{i+1}</span>
+                        <span className="ph-time">{String(h.hour).padStart(2, '0')}:00</span>
+                        <div className="ph-bar-wrap">
+                          <div className="ph-bar" style={{ width: `${(h.count / peakHours[0].count) * 100}%` }}></div>
+                        </div>
+                        <span className="ph-count">{h.count} Trx</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="report-card">
+                  <div className="report-card-title"><TrendingUp size={16} /> Tren Penjualan Harian</div>
+                  <div className="peak-hours-list">
+                    {dailyTrends.reverse().slice(0, 7).map(d => (
+                      <div key={d.date} className="peak-hour-row">
+                        <span className="ph-time" style={{ width: 80 }}>{new Date(d.date).toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric' })}</span>
+                        <div className="ph-bar-wrap">
+                          <div className="ph-bar trend" style={{ width: `${(d.revenue / Math.max(...dailyTrends.map(x=>x.revenue))) * 100}%` }}></div>
+                        </div>
+                        <span className="ph-count" style={{ minWidth: 80 }}>{formatRp(d.revenue)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'history' && (
+            <div className="reports-tab-content">
+              <div className="report-card full-width">
+                <div className="report-card-title">
+                  <FileText size={15} strokeWidth={2} /> Riwayat Transaksi Lengkap
+                </div>
+                {txs.length === 0 ? (
+                  <div className="report-empty">Belum ada transaksi di periode ini</div>
+                ) : (
+                  <div style={{ overflowX: 'auto' }}>
+                    <table className="table">
+                      <thead>
+                        <tr>
+                          <th>No Struk</th>
+                          <th>Waktu</th>
+                          <th>Pelanggan</th>
+                          <th>Status</th>
+                          <th>Bayar</th>
+                          <th>Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(window.innerWidth > 768 ? paginatedTxs : historyTxs).map(t => (
+                          <tr key={t.id}>
+                            <td><code style={{ fontSize: 11 }}>{t.receiptNo}</code></td>
+                            <td style={{ fontSize: 12, color: 'var(--text-muted)' }}>{new Date(t.createdAt).toLocaleString('id-ID')}</td>
+                            <td>
+                              {t.customerName ? (
+                                <span className="customer-chip">
+                                  <User size={11} strokeWidth={2} /> {t.customerName}
+                                </span>
+                              ) : (
+                                <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>—</span>
+                              )}
+                            </td>
+                            <td>
+                              <span className={`status-badge st-${t.status || 'on_process'}`}>
+                                {ORDER_STATUS_LABELS[t.status || 'on_process']}
+                              </span>
+                            </td>
+                            <td><span className="badge badge-green">{PAYMENT_LABELS[t.paymentMethod]}</span></td>
+                            <td className="text-semibold text-amber">{formatRp(t.total)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+
+                    {totalPages > 1 && (
+                      <div className="pagination desktop-only-pagination">
+                        <button 
+                          className="pagination-btn" 
+                          disabled={currentPage === 1}
+                          onClick={() => setCurrentPage(p => p - 1)}
+                        >
+                          <ChevronLeft size={16} />
+                        </button>
+                        <span className="pagination-info">
+                          Halaman {currentPage} dari {totalPages}
+                        </span>
+                        <button 
+                          className="pagination-btn" 
+                          disabled={currentPage === totalPages}
+                          onClick={() => setCurrentPage(p => p + 1)}
+                        >
+                          <ChevronRight size={16} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

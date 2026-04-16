@@ -40,3 +40,10 @@ export const ORDER_TYPE_LABELS = {
   direct: 'Langsung',
   online: 'Ojek Online',
 }
+
+export const ORDER_STATUS_LABELS = {
+  waiting_payment: 'Menunggu Bayar',
+  on_process: 'Diproses',
+  delivered: 'Selesai',
+  canceled: 'Dibatalkan',
+}

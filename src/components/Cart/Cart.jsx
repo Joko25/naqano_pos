@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   ShoppingCart, Trash2, User, X,
-  Banknote, Building2, QrCode
+  Banknote, Building2, QrCode, CreditCard
 } from 'lucide-react'
 import { useCartStore } from '../../store/cartStore'
 import { formatRp, PLATFORM_LABELS, ORDER_TYPE_LABELS } from '../../utils/format'
@@ -13,12 +13,28 @@ export default function Cart() {
   const {
     items, orderType, platform, taxPercent,
     customerName, setCustomerName,
+    customerType, setCustomerType,
+    autoOpenPayment, setAutoOpenPayment,
     updateQty, clearCart, setDiscount,
-    getSubtotal, getTax, getTotal
+    getSubtotal, getTax, getTotal, editingTransactionId
   } = useCartStore()
 
   const [showPayment, setShowPayment] = useState(false)
   const [discountInput, setDiscountInput] = useState('')
+
+  useEffect(() => {
+    if (autoOpenPayment && items.length > 0) {
+      setShowPayment('select')
+      setAutoOpenPayment(false)
+    }
+  }, [autoOpenPayment, items])
+
+  const isCustomerValid = customerType === 'guest' || (customerType === 'member' && customerName.trim() !== '')
+
+  async function handleCreateQueue() {
+    if (items.length === 0 || !isCustomerValid) return
+    setShowPayment('queue')
+  }
 
   const subtotal = getSubtotal()
   const tax = getTax()
@@ -37,7 +53,7 @@ export default function Cart() {
       <div className="cart-header">
         <div className="cart-header-left">
           <ShoppingCart size={18} strokeWidth={2} color="var(--tosca)" />
-          <span className="cart-title">Pesanan</span>
+          <span className="cart-title">Pesanan {editingTransactionId && <span className="text-amber">(Edit)</span>}</span>
           {itemCount > 0 && <span className="cart-badge">{itemCount}</span>}
         </div>
         {items.length > 0 && (
@@ -47,17 +63,34 @@ export default function Cart() {
         )}
       </div>
 
+      {/* Customer Selector */}
+      <div className="customer-selector">
+        <button 
+          className={`cust-type-btn ${customerType === 'guest' ? 'active' : ''}`}
+          onClick={() => setCustomerType('guest')}
+        >
+          Guest
+        </button>
+        <button 
+          className={`cust-type-btn ${customerType === 'member' ? 'active' : ''}`}
+          onClick={() => setCustomerType('member')}
+        >
+          Customer
+        </button>
+      </div>
+
       {/* Customer Name */}
-      <div className="customer-name-row">
+      <div className={`customer-name-row ${customerType === 'member' && !customerName ? 'invalid' : ''}`}>
         <User size={15} strokeWidth={2} className="customer-icon" />
         <input
           className="customer-name-input"
-          placeholder="Nama pelanggan (opsional)"
+          placeholder={customerType === 'guest' ? 'Pelanggan Guest' : 'Isi nama pelanggan (Wajib)'}
           value={customerName}
           onChange={e => setCustomerName(e.target.value)}
           maxLength={40}
+          disabled={customerType === 'guest'}
         />
-        {customerName && (
+        {customerName && customerType === 'member' && (
           <button className="customer-clear" onClick={() => setCustomerName('')} title="Hapus nama">
             <X size={13} strokeWidth={2.5} />
           </button>
@@ -155,14 +188,14 @@ export default function Cart() {
 
           {/* Payment Buttons */}
           <div className="payment-buttons">
-            <button className="pay-btn pay-cash" onClick={() => setShowPayment('cash')}>
-              <Banknote size={18} strokeWidth={1.75} /><span>Tunai</span>
+            <button className="pay-btn pay-queue" onClick={handleCreateQueue} disabled={items.length === 0 || !isCustomerValid}>
+              <ShoppingCart size={18} strokeWidth={2} />
+              <span>{editingTransactionId ? 'Simpan Perubahan' : 'Buat Pesanan'}</span>
             </button>
-            <button className="pay-btn pay-transfer" onClick={() => setShowPayment('transfer')}>
-              <Building2 size={18} strokeWidth={1.75} /><span>Transfer</span>
-            </button>
-            <button className="pay-btn pay-qris" onClick={() => setShowPayment('qris')}>
-              <QrCode size={18} strokeWidth={1.75} /><span>QRIS</span>
+            
+            <button className="pay-btn pay-main" onClick={() => setShowPayment('select')} disabled={items.length === 0 || !isCustomerValid}>
+              <CreditCard size={18} strokeWidth={2} />
+              <span>{editingTransactionId ? 'Update & Bayar' : 'Lanjut ke Pembayaran'}</span>
             </button>
           </div>
         </div>

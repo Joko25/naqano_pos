@@ -2,9 +2,9 @@ import Dexie from 'dexie'
 
 export const db = new Dexie('NaqanoPOS')
 
-db.version(2).stores({
+db.version(3).stores({
   products: '++id, name, category, isActive',
-  transactions: '++id, createdAt, orderType, platform, paymentMethod',
+  transactions: '++id, createdAt, orderType, platform, paymentMethod, status',
   transactionItems: '++id, transactionId, productId',
   settings: 'key',
   categories: '++id, name',

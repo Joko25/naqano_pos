@@ -5,11 +5,53 @@
   border-radius: var(--radius-md);
   margin-bottom: 16px;
 }
-.ptd-label { font-size: 12px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
-.ptd-amount { font-size: 28px; font-weight: 800; color: var(--amber); }
+.ptd-label { font-size: 11px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; }
+.ptd-amount { font-size: 32px; font-weight: 800; color: var(--tosca-dark); }
+
+.modal-body { padding: 24px; display: flex; flex-direction: column; gap: 20px; }
+
+/* Method Selector */
+.method-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.method-btn {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  border-radius: var(--radius-lg);
+  border: 1.5px solid var(--border);
+  background: var(--bg-card);
+  cursor: pointer;
+  transition: all var(--transition);
+  text-align: left;
+}
+.method-btn:hover {
+  border-color: var(--tosca);
+  background: var(--tosca-glow);
+  transform: translateY(-2px);
+}
+.method-btn svg {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  transition: color 0.2s;
+}
+.method-btn:hover svg { color: var(--tosca); }
+
+.method-name { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+.method-desc { font-size: 12px; color: var(--text-secondary); }
+
+.method-btn.cash:hover { border-color: var(--green); background: var(--green-glow); }
+.method-btn.cash:hover svg { color: var(--green); }
+.method-btn.transfer:hover { border-color: var(--blue); background: var(--blue-glow); }
+.method-btn.transfer:hover svg { color: var(--blue); }
+.method-btn.qris:hover { border-color: var(--amber); background: var(--amber-glow); }
+.method-btn.qris:hover svg { color: var(--amber); }
 
 /* Cash */
-.cash-payment { display: flex; flex-direction: column; gap: 14px; }
+.cash-payment { display: flex; flex-direction: column; gap: 16px; }
 
 .preset-amounts { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
 .preset-btn {
@@ -91,28 +133,43 @@
 .btn-blue:hover { background: #2563eb; }
 
 /* QRIS */
-.qris-payment { display: flex; flex-direction: column; gap: 14px; align-items: center; }
-.qris-container { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.qris-payment { display: flex; flex-direction: column; gap: 20px; align-items: center; padding-top: 10px; }
+.qris-container { display: flex; flex-direction: column; align-items: center; gap: 16px; width: 100%; }
 .qris-image {
-  width: 220px; height: 220px;
-  border: 8px solid #fff;
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-md);
+  width: 240px; height: 240px;
+  border: 10px solid #fff;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  transition: transform 0.2s;
 }
+.qris-image:hover { transform: scale(1.02); }
 .qris-loading {
-  width: 220px; height: 220px;
+  width: 240px; height: 240px;
   display: flex; align-items: center; justify-content: center;
   background: var(--bg-secondary);
   border-radius: var(--radius-md);
   font-size: 40px;
 }
-.qris-label { font-size: 12px; color: var(--text-muted); text-align: center; max-width: 240px; line-height: 1.5; }
-.qris-timer { font-size: 12px; color: var(--text-muted); margin-top: 8px; }
-.qris-timer strong { color: var(--text-primary); }
+.qris-label { font-size: 11px; color: var(--text-muted); text-align: center; max-width: 280px; line-height: 1.6; margin-top: 4px; }
+.qris-timer { font-size: 13px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
+.qris-timer strong { color: var(--text-primary); font-weight: 800; }
 .qris-expired { 
-  width: 220px; height: 220px; 
+  width: 240px; height: 240px; 
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   background: var(--bg-secondary); border-radius: var(--radius-md); gap: 10px;
+}
+
+.qris-actions {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.modal-full-qr {
+  background: rgba(0,0,0,0.85);
+  backdrop-filter: blur(8px);
 }
 .expired-icon { font-size: 32px; }
 .expired-text { font-size: 13px; font-weight: 600; color: var(--red); }

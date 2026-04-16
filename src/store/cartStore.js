@@ -7,12 +7,31 @@ export const useCartStore = create((set, get) => ({
   customerName: '',
   discount: 0,
   taxPercent: 0,
+  editingTransactionId: null,
+  customerType: 'guest', // 'guest' | 'member'
+  autoOpenPayment: false,
 
   setOrderType: (type) => set({ orderType: type, platform: type === 'direct' ? null : get().platform }),
   setPlatform: (p) => set({ platform: p }),
+  setCustomerType: (type) => set({ 
+    customerType: type, 
+    customerName: type === 'guest' ? '' : get().customerName 
+  }),
   setCustomerName: (name) => set({ customerName: name }),
   setDiscount: (d) => set({ discount: d }),
   setTaxPercent: (t) => set({ taxPercent: t }),
+  setAutoOpenPayment: (val) => set({ autoOpenPayment: val }),
+
+  loadTransaction: (tx, items, autoOpen = false) => set({
+    editingTransactionId: tx.id,
+    items: items,
+    orderType: tx.orderType,
+    platform: tx.platform,
+    customerType: tx.customerName === '' || tx.customerName === 'Guest' || tx.customerName === 'guest' ? 'guest' : 'member',
+    customerName: tx.customerName === 'Guest' ? '' : tx.customerName,
+    discount: tx.discount,
+    autoOpenPayment: autoOpen
+  }),
 
   addItem: (product) => {
     const items = get().items
@@ -36,7 +55,15 @@ export const useCartStore = create((set, get) => ({
     }
   },
 
-  clearCart: () => set({ items: [], discount: 0, customerName: '', orderType: 'direct', platform: null }),
+  clearCart: () => set({ 
+    items: [], 
+    discount: 0, 
+    customerName: '', 
+    orderType: 'direct', 
+    platform: null, 
+    editingTransactionId: null, 
+    customerType: 'guest' 
+  }),
 
   getPrice: (product) => {
     const { orderType } = get()

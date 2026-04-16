@@ -7,6 +7,7 @@ import POSView from './components/POS/POSView'
 import Cart from './components/Cart/Cart'
 import Products from './components/Products/Products'
 import Inventory from './components/Inventory/Inventory'
+import QueuePage from './components/Queue/QueuePage'
 import Reports from './components/Reports/Reports'
 import SettingsPage from './components/Settings/Settings'
 import { Toast } from './components/ui'
@@ -16,6 +17,7 @@ import './App.css'
 
 const NAV_ITEMS = [
   { id: 'pos',       label: 'Kasir',      Icon: ShoppingCart },
+  { id: 'queue',     label: 'Antrean',    Icon: Clock },
   { id: 'products',  label: 'Produk',     Icon: Package },
   { id: 'inventory', label: 'Bahan',      Icon: Coffee },
   { id: 'reports',   label: 'Laporan',    Icon: BarChart2 },
@@ -28,10 +30,16 @@ export default function App() {
   const [shopLogo, setShopLogo] = useState('')
   const [now, setNow] = useState(new Date())
   const [mobileCartOpen, setMobileCartOpen] = useState(false)
-  const { setTaxPercent, items, getTotal } = useCartStore()
+  const { setTaxPercent, items, getTotal, autoOpenPayment } = useCartStore()
 
   const itemCount = items.reduce((s, i) => s + i.qty, 0)
   const total = getTotal()
+
+  useEffect(() => {
+    if (autoOpenPayment && page === 'pos') {
+      setMobileCartOpen(true)
+    }
+  }, [autoOpenPayment, page])
 
   useEffect(() => {
     getAllSettings().then(s => {
@@ -120,6 +128,7 @@ export default function App() {
             )
           }
           if (page === 'products') return <Products />
+          if (page === 'queue') return <QueuePage onNavigate={setPage} />
           if (page === 'inventory') return <Inventory />
           if (page === 'reports') return <Reports />
           return <SettingsPage onLogoChange={setShopLogo} />
