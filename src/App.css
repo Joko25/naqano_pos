@@ -1,31 +1,41 @@
+/* ============================================================
+   APP LAYOUT — Sidebar + Content
+   ============================================================ */
+
 .app {
   height: 100vh;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   overflow: hidden;
   background: var(--bg-primary);
 }
 
-/* Topbar */
-.topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 58px;
-  padding: 0 20px;
-  background: linear-gradient(135deg, var(--tosca-dark) 0%, var(--tosca) 100%);
-  border-bottom: none;
+/* ============================================================
+   SIDEBAR
+   ============================================================ */
+.sidebar {
+  width: 220px;
   flex-shrink: 0;
-  gap: 16px;
-  z-index: 100;
-  box-shadow: 0 2px 16px rgba(13,148,136,0.25);
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, var(--tosca-dark) 0%, var(--tosca) 100%);
+  box-shadow: 4px 0 24px rgba(13,148,136,0.18);
+  z-index: 200;
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
 }
 
-.topbar-brand {
+/* ── Brand / Header ─────────────────── */
+.sidebar-brand {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  padding: 0 16px;
+  height: 64px;
   flex-shrink: 0;
+  border-bottom: 1px solid rgba(255,255,255,0.12);
+  overflow: hidden;
+  white-space: nowrap;
 }
 .brand-logo {
   height: 34px;
@@ -34,75 +44,218 @@
   border-radius: var(--radius-sm);
   flex-shrink: 0;
 }
-.brand-icon { font-size: 22px; }
-.brand-name { font-size: 16px; font-weight: 800; color: #ffffff; white-space: nowrap; letter-spacing: 0.01em; }
+.brand-icon { flex-shrink: 0; }
+.brand-name {
+  font-size: 15px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 0.01em;
+  overflow: hidden;
+  white-space: nowrap;
+  transition: opacity 0.2s ease, max-width 0.25s ease;
+  max-width: 200px;
+}
 
-.topbar-nav {
-  display: flex;
-  gap: 4px;
+/* ── Nav Items ──────────────────────── */
+.sidebar-nav {
   flex: 1;
-  justify-content: center;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 8px;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .nav-btn {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 7px 16px;
+  gap: 12px;
+  padding: 11px 12px;
   border-radius: var(--radius-md);
   border: none;
   background: transparent;
-  color: rgba(255,255,255,0.75);
+  color: rgba(255,255,255,0.72);
   font-family: inherit;
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 600;
   cursor: pointer;
-  transition: all var(--transition);
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-align: left;
+  width: 100%;
 }
-.nav-btn:hover { background: rgba(255,255,255,0.15); color: #fff; }
+.nav-btn:hover  { background: rgba(255,255,255,0.15); color: #fff; }
 .nav-btn.active {
   background: rgba(255,255,255,0.22);
   color: #fff;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
 }
-.nav-btn span:first-child { font-size: 16px; }
-
-.topbar-right {
+.nav-icon {
   flex-shrink: 0;
-}
-
-.topbar-time {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 2px;
-}
-.time-clock-row {
   display: flex;
   align-items: center;
-  gap: 5px;
+  justify-content: center;
+  width: 20px;
+}
+.nav-label {
+  overflow: hidden;
+  transition: opacity 0.2s ease, max-width 0.25s ease;
+  max-width: 180px;
+}
+
+/* ── Footer (jam + collapse btn) ────── */
+.sidebar-footer {
+  flex-shrink: 0;
+  border-top: 1px solid rgba(255,255,255,0.12);
+  padding: 12px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+.sidebar-time {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  overflow: hidden;
+  transition: opacity 0.2s ease, max-height 0.25s ease;
+  max-height: 60px;
+  width: 100%;
 }
 .time-clock {
-  font-size: 15px;
+  font-size: 20px;
   font-weight: 800;
-  color: #ffffff;
+  color: #fff;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
+  text-align: center;
 }
 .time-date {
   font-size: 10px;
   color: rgba(255,255,255,0.65);
   white-space: nowrap;
+  text-align: center;
+}
+.sidebar-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 8px;
+  border-radius: var(--radius-md);
+  border: none;
+  background: rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.8);
+  cursor: pointer;
+  transition: background 0.15s;
+  font-family: inherit;
+}
+.sidebar-toggle-btn:hover { background: rgba(255,255,255,0.2); color: #fff; }
+
+/* ── Desktop Collapsed ─────────────── */
+.sidebar.collapsed {
+  width: 64px;
+}
+.sidebar.collapsed .brand-name,
+.sidebar.collapsed .nav-label {
+  opacity: 0;
+  max-width: 0;
+  pointer-events: none;
+}
+.sidebar.collapsed .sidebar-time {
+  opacity: 0;
+  max-height: 0;
+  pointer-events: none;
 }
 
-/* Main Content */
+/* ============================================================
+   MAIN BODY
+   ============================================================ */
+.app-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Mobile topbar — hidden on desktop */
+.topbar {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+  padding: 0 14px;
+  background: linear-gradient(135deg, var(--tosca-dark) 0%, var(--tosca) 100%);
+  flex-shrink: 0;
+  gap: 12px;
+  z-index: 100;
+  box-shadow: 0 2px 16px rgba(13,148,136,0.25);
+}
+.topbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+.topbar-brand .brand-name {
+  font-size: 15px;
+  font-weight: 800;
+  color: #fff;
+  max-width: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.topbar-time {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  flex-shrink: 0;
+}
+.topbar-time .time-clock {
+  font-size: 14px;
+  font-weight: 800;
+  color: #fff;
+}
+.time-clock-row { display: flex; align-items: center; gap: 5px; }
+
+/* Hamburger */
+.hamburger-btn {
+  background: rgba(255,255,255,0.15);
+  border: none;
+  border-radius: var(--radius-sm);
+  color: #fff;
+  cursor: pointer;
+  padding: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+.hamburger-btn:hover { background: rgba(255,255,255,0.25); }
+
+/* ============================================================
+   MAIN CONTENT
+   ============================================================ */
 .main-content {
   flex: 1;
   overflow: hidden;
   display: flex;
 }
+.main-content > :not(.pos-layout) {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
 
-/* POS Layout */
+/* ── POS Layout ─────────────────────── */
 .pos-layout {
   display: flex;
   width: 100%;
@@ -123,61 +276,148 @@
   border-left: 1px solid var(--border);
 }
 
-/* Non-POS pages */
-.main-content > :not(.pos-layout) {
-  flex: 1;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+/* Sidebar overlay backdrop */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 32, 39, 0.5);
+  z-index: 590;
+  animation: fadeIn 0.2s ease;
+}
+.sidebar-overlay.visible { display: block; }
+
+
+/* ============================================================
+   TABLET (≤1024px) — sidebar collapsed (icon only), no drawer
+   ============================================================ */
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 64px;
+  }
+  .sidebar .brand-name,
+  .sidebar .nav-label {
+    opacity: 0;
+    max-width: 0;
+    pointer-events: none;
+  }
+  .sidebar .sidebar-time {
+    opacity: 0;
+    max-height: 0;
+    pointer-events: none;
+  }
+  .sidebar-toggle-btn { display: none; }
 }
 
+/* ============================================================
+   MOBILE (≤768px) — topbar + slide-over drawer
+   ============================================================ */
 @media (max-width: 768px) {
-  .pos-right { width: 300px; }
-  .brand-name { display: none; }
-  .topbar-time { display: none; }
-}
+  /* App becomes vertical stack */
+  .app { flex-direction: column; }
 
-@media (max-width: 630px) {
-  .pos-layout { flex-direction: row; } /* Keep side by side for tablets, but column for tiny phones */
-  
-  /* Mobile Cart Toggle Implementation */
-  .pos-left { width: 100%; flex: 1; position: relative; }
+  /* Show mobile topbar */
+  .topbar { display: flex; }
+
+  /* Sidebar: fixed overlay drawer, always full width */
+  .sidebar {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    bottom: 0 !important;
+    width: 260px !important;
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 600;
+    box-shadow: 6px 0 40px rgba(0,0,0,0.3);
+  }
+
+  /* Force labels and time visible in mobile drawer */
+  .sidebar .brand-name {
+    opacity: 1 !important;
+    max-width: 200px !important;
+    pointer-events: auto !important;
+  }
+  .sidebar .nav-label {
+    opacity: 1 !important;
+    max-width: 180px !important;
+    pointer-events: auto !important;
+  }
+  .sidebar .sidebar-time {
+    opacity: 1 !important;
+    max-height: 60px !important;
+    pointer-events: auto !important;
+  }
+  .sidebar-toggle-btn { display: none !important; }
+
+  /* Open state */
+  .sidebar.mobile-open {
+    transform: translateX(0) !important;
+  }
+
+  /* Main body fills remaining space under topbar */
+  .app-body {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  /* Cart drawer */
   .pos-right {
-    position: fixed; top: 58px; left: 0; right: 0; bottom: 0;
-    width: 100%; z-index: 500; background: #fff;
-    transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: fixed;
+    top: 56px;
+    left: 0; right: 0; bottom: 0;
+    width: 100% !important;
+    z-index: 500;
+    background: var(--bg-secondary);
+    transform: translateX(100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     border: none;
-    display: flex; flex-direction: column;
+    display: flex;
+    flex-direction: column;
   }
   .pos-right.open { transform: translateX(0); }
   .pos-right.open > .cart-panel { flex: 1; height: auto !important; }
 
-
+  /* FAB cart button */
   .mobile-cart-fab-wrap {
-    position: fixed; bottom: 0; left: 0; right: 0; padding: 16px;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    padding: 16px;
     background: linear-gradient(0deg, rgba(255,255,255,1) 40%, rgba(255,255,255,0) 100%);
     z-index: 400;
   }
   .mobile-cart-fab {
-    width: 100%; height: 54px; border-radius: var(--radius-lg);
+    width: 100%; height: 54px;
+    border-radius: var(--radius-lg);
     background: var(--tosca); color: #fff; border: none;
     display: flex; align-items: center; justify-content: space-between;
-    padding: 0 16px; box-shadow: 0 8px 24px rgba(13,148,136,0.35);
+    padding: 0 16px;
+    box-shadow: 0 8px 24px rgba(13,148,136,0.35);
     cursor: pointer; font-family: inherit; font-weight: 700;
   }
   .fab-left { display: flex; align-items: center; gap: 10px; }
   .fab-badge {
-    background: #fff; color: var(--tosca); font-size: 13px; font-weight: 800;
+    background: #fff; color: var(--tosca);
+    font-size: 13px; font-weight: 800;
     width: 24px; height: 24px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
   }
   .fab-right { display: flex; align-items: center; gap: 8px; }
-  
+
   .mobile-cart-close {
-    display: flex; align-items: center; gap: 8px; width: 100%; padding: 12px 16px;
-    background: var(--bg-secondary); border: none; border-bottom: 1px solid var(--border);
-    color: var(--tosca-dark); font-family: inherit; font-weight: 700; font-size: 14px;
-    cursor: pointer;
+    display: flex; align-items: center; gap: 8px;
+    width: 100%; padding: 12px 16px;
+    background: var(--bg-secondary); border: none;
+    border-bottom: 1px solid var(--border);
+    color: var(--tosca-dark); font-family: inherit;
+    font-weight: 700; font-size: 14px; cursor: pointer;
   }
-  
-  .nav-btn span:last-child { display: none; }
+}
+
+/* ============================================================
+   SMALL MOBILE (≤480px)
+   ============================================================ */
+@media (max-width: 480px) {
+  .sidebar { width: 80vw !important; max-width: 280px !important; }
 }

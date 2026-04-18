@@ -3,8 +3,6 @@ import { db } from '../../db'
 import { formatRp } from '../../utils/format'
 import { Modal, Toggle, ConfirmModal, EmptyState, toast } from '../ui'
 import './Products.css'
-
-const CATEGORY_OPTIONS = ['Kopi', 'Non-Kopi', 'Makanan', 'Camilan']
 const EMOJI_OPTIONS = ['☕', '🧋', '🍵', '🍫', '🧃', '🍞', '🥐', '🍪', '🧁', '🍰', '🥤', '🫖']
 const TEMP_OPTIONS = [
   { value: 'None', label: 'Normal', icon: null },
@@ -14,13 +12,19 @@ const TEMP_OPTIONS = [
 
 export default function Products() {
   const [products, setProducts] = useState([])
+  const [categories, setCategories] = useState([])
   const [showForm, setShowForm] = useState(false)
   const [editProduct, setEditProduct] = useState(null)
   const [confirmId, setConfirmId] = useState(null)
   const [search, setSearch] = useState('')
   const [filterCat, setFilterCat] = useState('Semua')
 
-  useEffect(() => { loadProducts() }, [])
+  useEffect(() => { loadProducts(); loadCategories() }, [])
+
+  async function loadCategories() {
+    const cats = await db.categories.orderBy('name').toArray()
+    setCategories(cats)
+  }
 
   async function loadProducts() {
     const prods = await db.products.orderBy('name').toArray()
@@ -75,7 +79,7 @@ export default function Products() {
           style={{ maxWidth: 280 }}
         />
         <div className="filter-tabs">
-          {['Semua', ...CATEGORY_OPTIONS].map(c => (
+          {['Semua', ...categories.map(c => c.name)].map(c => (
             <button
               key={c}
               className={`filter-tab ${filterCat === c ? 'active' : ''}`}
@@ -158,6 +162,7 @@ export default function Products() {
         onClose={() => { setShowForm(false); setEditProduct(null) }}
         onSave={saveProduct}
         initial={editProduct}
+        categories={categories}
       />
 
       <ConfirmModal
@@ -172,8 +177,9 @@ export default function Products() {
   )
 }
 
-function ProductFormModal({ open, onClose, onSave, initial }) {
-  const empty = { name: '', category: 'Kopi', temp: 'None', priceDirect: '', priceOnline: '', costPrice: '', emoji: '☕', isActive: 1 }
+function ProductFormModal({ open, onClose, onSave, initial, categories = [] }) {
+  const defaultCat = categories[0]?.name || 'Kopi'
+  const empty = { name: '', category: defaultCat, temp: 'None', priceDirect: '', priceOnline: '', costPrice: '', emoji: '☕', isActive: 1 }
   const [form, setForm] = useState(empty)
 
   useEffect(() => {
@@ -233,7 +239,7 @@ function ProductFormModal({ open, onClose, onSave, initial }) {
         <div className="input-group">
           <label className="input-label" htmlFor="prod-cat">Kategori</label>
           <select id="prod-cat" className="select" value={form.category} onChange={e => set('category', e.target.value)}>
-            {CATEGORY_OPTIONS.map(c => <option key={c} value={c}>{c}</option>)}
+            {categories.map(c => <option key={c.id} value={c.name}>{c.icon} {c.name}</option>)}
           </select>
         </div>
 

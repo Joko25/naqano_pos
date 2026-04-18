@@ -174,8 +174,16 @@ body {
 .modal {
   background: var(--bg-card); border: 1px solid var(--border-strong);
   border-radius: var(--radius-xl); box-shadow: var(--shadow-lg);
-  width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto;
+  width: 100%; max-width: 480px; max-height: 90vh;
+  overflow-y: auto; overflow-x: hidden;
   animation: slideUp 0.25s ease;
+}
+/* Pastikan modal body tidak overflow */
+.modal-body {
+  padding: 24px;
+  overflow: hidden;
+  box-sizing: border-box;
+  width: 100%;
 }
 .modal-header {
   display: flex; align-items: center; justify-content: space-between;

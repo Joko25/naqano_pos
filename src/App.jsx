@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react'
 import {
   ShoppingCart, Package, BarChart2, Settings,
-  Clock, Coffee, ArrowRight, ChevronLeft
+  Clock, Coffee, ArrowRight, ChevronLeft,
+  Tag, Menu, X, ChevronsLeft, ChevronsRight
 } from 'lucide-react'
 import POSView from './components/POS/POSView'
 import Cart from './components/Cart/Cart'
 import Products from './components/Products/Products'
+import Categories from './components/Categories/Categories'
 import Inventory from './components/Inventory/Inventory'
 import QueuePage from './components/Queue/QueuePage'
 import Reports from './components/Reports/Reports'
@@ -16,12 +18,13 @@ import { useCartStore } from './store/cartStore'
 import './App.css'
 
 const NAV_ITEMS = [
-  { id: 'pos',       label: 'Kasir',      Icon: ShoppingCart },
-  { id: 'queue',     label: 'Antrean',    Icon: Clock },
-  { id: 'products',  label: 'Produk',     Icon: Package },
-  { id: 'inventory', label: 'Bahan',      Icon: Coffee },
-  { id: 'reports',   label: 'Laporan',    Icon: BarChart2 },
-  { id: 'settings',  label: 'Pengaturan', Icon: Settings },
+  { id: 'pos',        label: 'Kasir',      Icon: ShoppingCart },
+  { id: 'queue',      label: 'Antrean',    Icon: Clock },
+  { id: 'products',   label: 'Produk',     Icon: Package },
+  { id: 'categories', label: 'Kategori',   Icon: Tag },
+  { id: 'inventory',  label: 'Bahan',      Icon: Coffee },
+  { id: 'reports',    label: 'Laporan',    Icon: BarChart2 },
+  { id: 'settings',   label: 'Pengaturan', Icon: Settings },
 ]
 
 export default function App() {
@@ -30,15 +33,15 @@ export default function App() {
   const [shopLogo, setShopLogo] = useState('')
   const [now, setNow] = useState(new Date())
   const [mobileCartOpen, setMobileCartOpen] = useState(false)
-  const { setTaxPercent, items, getTotal, autoOpenPayment } = useCartStore()
+  const [sidebarOpen, setSidebarOpen] = useState(false)       // mobile drawer
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false) // desktop collapse
 
+  const { setTaxPercent, items, getTotal, autoOpenPayment } = useCartStore()
   const itemCount = items.reduce((s, i) => s + i.qty, 0)
   const total = getTotal()
 
   useEffect(() => {
-    if (autoOpenPayment && page === 'pos') {
-      setMobileCartOpen(true)
-    }
+    if (autoOpenPayment && page === 'pos') setMobileCartOpen(true)
   }, [autoOpenPayment, page])
 
   useEffect(() => {
@@ -52,88 +55,142 @@ export default function App() {
   }, [])
 
   const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
-  const dateStr = now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+  const dateStr = now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })
+
+  function navigate(id) {
+    setPage(id)
+    setSidebarOpen(false) // tutup drawer di mobile setelah pilih menu
+    if (id !== 'pos') setMobileCartOpen(false)
+  }
 
   return (
     <div className="app">
       <Toast />
 
-      {/* Top Bar */}
-      <header className="topbar">
-        <div className="topbar-brand">
+      {/* ===================== SIDEBAR ===================== */}
+      {/* Overlay backdrop (mobile) */}
+      {sidebarOpen && (
+        <div
+          className="sidebar-overlay visible"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      <aside className={`sidebar ${sidebarCollapsed ? 'collapsed' : ''} ${sidebarOpen ? 'mobile-open' : ''}`}>
+        {/* Brand */}
+        <div className="sidebar-brand">
           {shopLogo ? (
             <img src={shopLogo} alt="Logo" className="brand-logo" />
           ) : (
-            <Coffee size={24} color="#fff" strokeWidth={2} />
+            <Coffee size={26} color="#fff" strokeWidth={2} className="brand-icon" />
           )}
           <span className="brand-name">{shopName}</span>
         </div>
 
-        <nav className="topbar-nav">
+        {/* Navigation */}
+        <nav className="sidebar-nav">
           {NAV_ITEMS.map(({ id, label, Icon }) => (
             <button
               key={id}
               className={`nav-btn ${page === id ? 'active' : ''}`}
-              onClick={() => { setPage(id); if (id !== 'pos') setMobileCartOpen(false) }}
+              onClick={() => navigate(id)}
+              title={label}
             >
-              <Icon size={16} strokeWidth={2} />
-              <span>{label}</span>
+              <span className="nav-icon">
+                <Icon size={18} strokeWidth={2} />
+              </span>
+              <span className="nav-label">{label}</span>
             </button>
           ))}
         </nav>
 
-        <div className="topbar-right">
-          <div className="topbar-time">
-            <div className="time-clock-row">
-              <Clock size={12} color="rgba(255,255,255,0.7)" strokeWidth={2} />
-              <span className="time-clock">{timeStr}</span>
-            </div>
+        {/* Footer — jam & tombol collapse */}
+        <div className="sidebar-footer">
+          <div className="sidebar-time">
+            <span className="time-clock">{timeStr}</span>
             <span className="time-date">{dateStr}</span>
           </div>
+          {/* Collapse toggle hanya desktop */}
+          <button
+            className="sidebar-toggle-btn"
+            onClick={() => setSidebarCollapsed(c => !c)}
+            title={sidebarCollapsed ? 'Perluas sidebar' : 'Ciutkan sidebar'}
+          >
+            {sidebarCollapsed
+              ? <ChevronsRight size={16} strokeWidth={2.5} />
+              : <ChevronsLeft size={16} strokeWidth={2.5} />
+            }
+          </button>
         </div>
-      </header>
+      </aside>
 
-      {/* Main Content */}
-      <main className="main-content">
-        {(() => {
-          if (page === 'pos') {
-            return (
-              <div className={`pos-layout ${mobileCartOpen ? 'cart-open' : ''}`}>
-                <div className="pos-left">
-                  <POSView />
-                  {!mobileCartOpen && itemCount > 0 && (
-                    <div className="mobile-cart-fab-wrap">
-                      <button className="mobile-cart-fab" onClick={() => setMobileCartOpen(true)}>
-                        <div className="fab-left">
-                          <div className="fab-badge">{itemCount}</div>
-                          <span>Lihat Pesanan</span>
-                        </div>
-                        <div className="fab-right">
-                          <span>Rp {total.toLocaleString('id-ID')}</span>
-                          <ArrowRight size={18} />
-                        </div>
-                      </button>
-                    </div>
-                  )}
-                </div>
-                <div className={`pos-right ${mobileCartOpen ? 'open' : ''}`}>
-                  {mobileCartOpen && (
-                    <button className="mobile-cart-close" onClick={() => setMobileCartOpen(false)}>
-                      <ChevronLeft size={20} /> Kembali ke Menu
-                    </button>
-                  )}
-                  <Cart />
-                </div>
+      {/* ===================== MAIN BODY ===================== */}
+      <div className="app-body">
+        {/* Mobile Topbar (hanya tampil di ≤768px) */}
+        <header className="topbar">
+          <button className="hamburger-btn" onClick={() => setSidebarOpen(o => !o)}>
+            {sidebarOpen ? <X size={20} strokeWidth={2.5} /> : <Menu size={20} strokeWidth={2.5} />}
+          </button>
+          <div className="topbar-brand">
+            {shopLogo
+              ? <img src={shopLogo} alt="Logo" className="brand-logo" />
+              : <Coffee size={22} color="#fff" strokeWidth={2} />
+            }
+            <span className="brand-name">{shopName}</span>
+          </div>
+          <div className="topbar-right">
+            <div className="topbar-time">
+              <div className="time-clock-row">
+                <Clock size={11} color="rgba(255,255,255,0.7)" strokeWidth={2} />
+                <span className="time-clock" style={{ fontSize:14 }}>{timeStr}</span>
               </div>
-            )
-          }
-          if (page === 'products') return <Products />
-          if (page === 'queue') return <QueuePage onNavigate={setPage} />
-          if (page === 'inventory') return <Inventory />
-          if (page === 'reports') return <Reports />
-          return <SettingsPage onLogoChange={setShopLogo} />
-        })()}
-      </main>
+            </div>
+          </div>
+        </header>
+
+        {/* Main Content */}
+        <main className="main-content">
+          {(() => {
+            if (page === 'pos') {
+              return (
+                <div className={`pos-layout ${mobileCartOpen ? 'cart-open' : ''}`}>
+                  <div className="pos-left">
+                    <POSView />
+                    {!mobileCartOpen && itemCount > 0 && (
+                      <div className="mobile-cart-fab-wrap">
+                        <button className="mobile-cart-fab" onClick={() => setMobileCartOpen(true)}>
+                          <div className="fab-left">
+                            <div className="fab-badge">{itemCount}</div>
+                            <span>Lihat Pesanan</span>
+                          </div>
+                          <div className="fab-right">
+                            <span>Rp {total.toLocaleString('id-ID')}</span>
+                            <ArrowRight size={18} />
+                          </div>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <div className={`pos-right ${mobileCartOpen ? 'open' : ''}`}>
+                    {mobileCartOpen && (
+                      <button className="mobile-cart-close" onClick={() => setMobileCartOpen(false)}>
+                        <ChevronLeft size={20} /> Kembali ke Menu
+                      </button>
+                    )}
+                    <Cart />
+                  </div>
+                </div>
+              )
+            }
+            if (page === 'products')   return <Products />
+            if (page === 'categories') return <Categories />
+            if (page === 'queue')      return <QueuePage onNavigate={setPage} />
+            if (page === 'inventory')  return <Inventory />
+            if (page === 'reports')    return <Reports />
+            return <SettingsPage onLogoChange={setShopLogo} />
+          })()}
+        </main>
+      </div>
     </div>
   )
 }

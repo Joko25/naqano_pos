@@ -12,7 +12,6 @@ import {
 } from '../ui/PlatformLogos'
 import './POS.css'
 
-const CATEGORIES = ['Semua', 'Kopi', 'Non-Kopi', 'Makanan', 'Camilan']
 
 const PLATFORM_CONFIG = [
   { id: 'gofood', Logo: GoFoodLogo, label: 'GoFood' },
@@ -22,17 +21,22 @@ const PLATFORM_CONFIG = [
 
 export default function POSView() {
   const [products, setProducts] = useState([])
+  const [categories, setCategories] = useState([])
   const [category, setCategory] = useState('Semua')
   const [search, setSearch] = useState('')
   const { addItem, orderType, setOrderType, platform, setPlatform } = useCartStore()
 
   useEffect(() => {
     async function loadProducts() {
-      // Load all products and filter locally to be more resilient to type mismatches (true vs 1)
       const all = await db.products.toArray()
       setProducts(all.filter(p => !!p.isActive))
     }
+    async function loadCategories() {
+      const cats = await db.categories.orderBy('name').toArray()
+      setCategories(cats)
+    }
     loadProducts()
+    loadCategories()
     const interval = setInterval(loadProducts, 3000)
     return () => clearInterval(interval)
   }, [])
@@ -104,13 +108,16 @@ export default function POSView() {
 
       {/* Category Tabs */}
       <div className="category-tabs">
-        {CATEGORIES.map(cat => (
+        {['Semua', ...categories.map(c => c.name)].map(cat => (
           <button
             key={cat}
             className={`category-tab ${category === cat ? 'active' : ''}`}
             onClick={() => setCategory(cat)}
           >
-            {cat === 'Semua' ? '🍽️' : cat === 'Kopi' ? '☕' : cat === 'Non-Kopi' ? '🧃' : cat === 'Makanan' ? '🍞' : '🍪'} {cat}
+            {cat === 'Semua'
+              ? '🍽️'
+              : (categories.find(c => c.name === cat)?.icon || '📦')
+            } {cat}
           </button>
         ))}
       </div>

@@ -335,6 +335,16 @@ export default function Reports() {
                       <div className="kpi-value blue">{formatRp(onlineRevenue)}</div>
                     </div>
                   </div>
+
+                  {/* Daily Sales Chart */}
+                  {dailyTrends.length > 1 && (
+                    <div className="report-card full-width chart-card">
+                      <div className="report-card-title">
+                        <TrendingUp size={15} strokeWidth={2} /> Grafik Penjualan Harian
+                      </div>
+                      <SalesBarChart data={dailyTrends} />
+                    </div>
+                  )}
                 </div>
 
                 <div className="reports-grid">
@@ -586,6 +596,124 @@ function BreakdownRow({ label, count, amount, color }) {
       <span className="bd-label">{label}</span>
       <span className="bd-count">{count}x</span>
       <span className={`bd-amount text-${color}`}>{formatRp(amount)}</span>
+    </div>
+  )
+}
+
+
+function SalesBarChart({ data }) {
+  const [hoveredIdx, setHoveredIdx] = useState(null)
+
+  if (!data || data.length === 0) return null
+
+  const chartData = [...data].sort((a, b) => a.date.localeCompare(b.date)).slice(-30)
+  const maxRevenue = Math.max(...chartData.map(d => d.revenue), 1)
+  const n = chartData.length
+
+  const W = 800, H = 220
+  const PAD = { top: 24, right: 16, bottom: 40, left: 52 }
+  const plotW = W - PAD.left - PAD.right
+  const plotH = H - PAD.top - PAD.bottom
+
+  const pts = chartData.map((d, i) => ({
+    x: PAD.left + (n > 1 ? (i / (n - 1)) * plotW : plotW / 2),
+    y: PAD.top + plotH - (d.revenue / maxRevenue) * plotH,
+    ...d,
+  }))
+
+  const linePoints = pts.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')
+  const areaPoints = [
+    `${pts[0].x.toFixed(1)},${(PAD.top + plotH).toFixed(1)}`,
+    ...pts.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`),
+    `${pts[n - 1].x.toFixed(1)},${(PAD.top + plotH).toFixed(1)}`,
+  ].join(' ')
+
+  const todayStr = new Date().toISOString().slice(0, 10)
+  const fmtDate = (dateStr) => new Date(dateStr + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
+  const fmtShort = (val) => {
+    if (val >= 1_000_000) return `${(val / 1_000_000).toFixed(1)}jt`
+    if (val >= 1_000) return `${Math.round(val / 1_000)}rb`
+    return String(val)
+  }
+  const labelStep = n <= 14 ? 1 : Math.ceil(n / 10)
+
+  return (
+    <div className="sales-chart-wrap">
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        style={{ width: '100%', height: 'auto', display: 'block', overflow: 'visible' }}
+      >
+        <defs>
+          <linearGradient id="lineAreaGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%"   stopColor="#0d9488" stopOpacity="0.2" />
+            <stop offset="100%" stopColor="#0d9488" stopOpacity="0.01" />
+          </linearGradient>
+        </defs>
+
+        {[0, 25, 50, 75, 100].map(pct => {
+          const y = PAD.top + plotH - (pct / 100) * plotH
+          return (
+            <g key={pct}>
+              <line x1={PAD.left} y1={y} x2={W - PAD.right} y2={y}
+                stroke="#c7e8e4" strokeWidth={pct === 0 ? 1.5 : 1} strokeDasharray={pct === 0 ? 'none' : '5 4'} />
+              <text x={PAD.left - 8} y={y} textAnchor="end" dominantBaseline="middle" fontSize="11" fill="#7fa8a4">
+                {pct === 0 ? '0' : fmtShort((maxRevenue * pct) / 100)}
+              </text>
+            </g>
+          )
+        })}
+
+        <line x1={PAD.left} y1={PAD.top + plotH} x2={W - PAD.right} y2={PAD.top + plotH} stroke="#c7e8e4" strokeWidth="1.5" />
+        <polygon points={areaPoints} fill="url(#lineAreaGrad)" />
+        <polyline points={linePoints} fill="none" stroke="#0d9488" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+
+        {pts.map((p, i) => {
+          const isToday   = p.date === todayStr
+          const isHovered = hoveredIdx === i
+          const showLabel = i % labelStep === 0 || isToday || i === n - 1
+          const r         = isHovered || isToday ? 6 : 4
+          const tipW      = 110
+          const tipX      = Math.min(Math.max(p.x - tipW / 2, PAD.left), W - PAD.right - tipW)
+
+          return (
+            <g key={p.date}>
+              {showLabel && (
+                <text x={p.x} y={PAD.top + plotH + 16} textAnchor="middle"
+                  fontSize={isToday ? '11' : '9'} fontWeight={isToday ? '800' : '600'}
+                  fill={isToday ? '#0d9488' : '#7fa8a4'}>
+                  {fmtDate(p.date).split(' ')[0]}
+                </text>
+              )}
+              <circle cx={p.x} cy={p.y} r={r}
+                fill={isToday ? '#0f766e' : '#0d9488'} stroke="#fff" strokeWidth="2"
+                style={{ cursor: 'pointer' }}
+                onMouseEnter={() => setHoveredIdx(i)}
+                onMouseLeave={() => setHoveredIdx(null)}
+                onTouchStart={(e) => { e.preventDefault(); setHoveredIdx(isHovered ? null : i) }}
+              />
+              {isHovered && (
+                <g>
+                  <rect x={tipX + 2} y={p.y - 68} width={tipW} height={60} rx="9" fill="rgba(0,0,0,0.1)" />
+                  <rect x={tipX} y={p.y - 70} width={tipW} height={60} rx="9" fill="#0f766e" />
+                  <polygon points={`${p.x - 6},${p.y - 12} ${p.x + 6},${p.y - 12} ${p.x},${p.y - 5}`} fill="#0f766e" />
+                  <text x={tipX + tipW / 2} y={p.y - 54} textAnchor="middle" fontSize="10" fill="rgba(255,255,255,0.75)" fontWeight="600">{fmtDate(p.date)}</text>
+                  <text x={tipX + tipW / 2} y={p.y - 37} textAnchor="middle" fontSize="14" fill="#fff" fontWeight="800">{formatRp(p.revenue)}</text>
+                  <text x={tipX + tipW / 2} y={p.y - 20} textAnchor="middle" fontSize="10" fill="rgba(255,255,255,0.65)">{p.count} transaksi</text>
+                </g>
+              )}
+            </g>
+          )
+        })}
+      </svg>
+
+      <div className="chart-legend">
+        <svg width="24" height="12" style={{ flexShrink: 0 }}>
+          <line x1="0" y1="6" x2="24" y2="6" stroke="#0d9488" strokeWidth="2.5" strokeLinecap="round" />
+          <circle cx="12" cy="6" r="3.5" fill="#0d9488" stroke="#fff" strokeWidth="1.5" />
+        </svg>
+        <span>Omzet harian ({chartData.length} hari)</span>
+        <span className="chart-legend-max">Maks: {formatRp(maxRevenue)}</span>
+      </div>
     </div>
   )
 }

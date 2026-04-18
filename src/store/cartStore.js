@@ -1,5 +1,11 @@
 import { create } from 'zustand'
 
+const PLATFORM_NAMES = {
+  gofood: 'GoFood',
+  grabfood: 'GrabFood',
+  shopeefood: 'ShopeeFood',
+}
+
 export const useCartStore = create((set, get) => ({
   items: [],
   orderType: 'direct', // 'direct' | 'online'
@@ -11,8 +17,19 @@ export const useCartStore = create((set, get) => ({
   customerType: 'guest', // 'guest' | 'member'
   autoOpenPayment: false,
 
-  setOrderType: (type) => set({ orderType: type, platform: type === 'direct' ? null : get().platform }),
-  setPlatform: (p) => set({ platform: p }),
+  setOrderType: (type) => set({
+    orderType: type,
+    platform: type === 'direct' ? null : get().platform,
+    // Reset nama pelanggan saat kembali ke direct
+    customerName: type === 'direct' ? '' : get().customerName,
+    customerType: type === 'direct' ? 'guest' : get().customerType,
+  }),
+  setPlatform: (p) => set({
+    platform: p,
+    // Auto-fill nama pelanggan dengan nama platform
+    customerName: p ? PLATFORM_NAMES[p] || '' : '',
+    customerType: p ? 'member' : 'guest',
+  }),
   setCustomerType: (type) => set({ 
     customerType: type, 
     customerName: type === 'guest' ? '' : get().customerName 

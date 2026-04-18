@@ -1,0 +1,214 @@
+.categories-page {
+  padding: 24px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.categories-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  gap: 16px;
+}
+
+/* Grid kartu kategori */
+.cat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+.cat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  transition: box-shadow 0.2s, border-color 0.2s, transform 0.15s;
+}
+
+.cat-card:hover {
+  border-color: var(--tosca);
+  box-shadow: 0 4px 18px var(--tosca-glow, rgba(40,200,180,0.12));
+  transform: translateY(-2px);
+}
+
+.cat-icon {
+  font-size: 32px;
+  line-height: 1;
+  min-width: 40px;
+  text-align: center;
+}
+
+.cat-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.cat-name {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cat-count {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.cat-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* Form modal */
+.cat-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.cat-form-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--surface-2, var(--bg));
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.cat-form-icon {
+  font-size: 36px;
+  line-height: 1;
+}
+
+.cat-form-name-preview {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* Icon Grid */
+.cat-icon-grid {
+  display: grid;
+  /* auto-fill: otomatis wrap sesuai lebar container, min 40px per icon */
+  grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+  gap: 8px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  /* Cegah overflow horizontal */
+  overflow: hidden;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.cat-icon-opt {
+  background: transparent;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  font-size: 20px;
+  padding: 0;
+  cursor: pointer;
+  line-height: 1;
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+  aspect-ratio: 1;
+  /* Pastikan tidak shrink di bawah ukuran minimum */
+  min-width: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cat-icon-opt:hover {
+  background: var(--tosca-glow, rgba(40,200,180,0.12));
+  transform: scale(1.1);
+}
+
+.cat-icon-opt.active {
+  border-color: var(--tosca);
+  background: var(--tosca-glow, rgba(40,200,180,0.15));
+}
+
+@media (max-width: 768px) {
+  .categories-page {
+    padding: 16px;
+  }
+
+  .cat-grid {
+    /* 2 kolom di tablet */
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .cat-card {
+    padding: 14px 12px;
+    gap: 10px;
+  }
+
+  .cat-icon {
+    font-size: 26px;
+    min-width: 32px;
+  }
+
+  /* Biarkan auto-fill yang mengatur, tidak perlu override */
+  .cat-icon-grid {
+    gap: 6px;
+    padding: 10px;
+  }
+
+  .cat-icon-opt {
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .categories-page {
+    padding: 12px;
+  }
+
+  .categories-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .categories-header .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .cat-grid {
+    /* 1 kolom di HP kecil */
+    grid-template-columns: 1fr;
+  }
+
+  .cat-icon-grid {
+    gap: 5px;
+    padding: 8px;
+    /* Icon lebih kecil di HP kecil */
+    grid-template-columns: repeat(auto-fill, minmax(34px, 1fr));
+  }
+
+  .cat-icon-opt {
+    font-size: 16px;
+  }
+
+  .cat-form-icon {
+    font-size: 28px;
+  }
+
+  .cat-form-name-preview {
+    font-size: 15px;
+  }
+}

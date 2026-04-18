@@ -29,7 +29,9 @@ export default function Cart() {
     }
   }, [autoOpenPayment, items])
 
-  const isCustomerValid = customerType === 'guest' || (customerType === 'member' && customerName.trim() !== '')
+  const isCustomerValid = customerType === 'guest' ||
+    (customerType === 'member' && customerName.trim() !== '') ||
+    (orderType === 'online' && customerName.trim() !== '')
 
   async function handleCreateQueue() {
     if (items.length === 0 || !isCustomerValid) return
@@ -80,17 +82,23 @@ export default function Cart() {
       </div>
 
       {/* Customer Name */}
-      <div className={`customer-name-row ${customerType === 'member' && !customerName ? 'invalid' : ''}`}>
+      <div className={`customer-name-row ${orderType === 'online' || customerType === 'member' ? (customerName.trim() ? '' : 'invalid') : ''}`}>
         <User size={15} strokeWidth={2} className="customer-icon" />
         <input
           className="customer-name-input"
-          placeholder={customerType === 'guest' ? 'Pelanggan Guest' : 'Isi nama pelanggan (Wajib)'}
+          placeholder={
+            orderType === 'online'
+              ? 'Nama platform (auto-filled)'
+              : customerType === 'guest'
+                ? 'Pelanggan Guest'
+                : 'Isi nama pelanggan (Wajib)'
+          }
           value={customerName}
           onChange={e => setCustomerName(e.target.value)}
           maxLength={40}
-          disabled={customerType === 'guest'}
+          disabled={customerType === 'guest' && orderType !== 'online'}
         />
-        {customerName && customerType === 'member' && (
+        {customerName && (orderType === 'online' || customerType === 'member') && (
           <button className="customer-clear" onClick={() => setCustomerName('')} title="Hapus nama">
             <X size={13} strokeWidth={2.5} />
           </button>
