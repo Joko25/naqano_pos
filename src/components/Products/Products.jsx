@@ -249,7 +249,7 @@ function ProductFormModal({ open, onClose, onSave, initial, categories = [] }) {
 
         <div className="input-group">
           <label className="input-label" htmlFor="prod-name">Nama Produk</label>
-          <input id="prod-name" className="input" value={form.name} onChange={e => set('name', e.target.value)} placeholder="Contoh: Es Kopi Susu" />
+          <input id="prod-name" className="input" value={form.name} onChange={e => set('name', e.target.value)} placeholder="Contoh: Es Kopi Susu" autoFocus />
         </div>
 
         <div className="input-group">

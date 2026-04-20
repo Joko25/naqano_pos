@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { db } from '../../db'
 import { formatRp } from '../../utils/format'
 import { 
@@ -336,7 +336,7 @@ function MaterialModal({ initial, onClose, onSave }) {
         <div className="modal-body">
           <div className="input-group">
             <label className="input-label" htmlFor="mat-name">Nama Bahan</label>
-            <input id="mat-name" className="input" placeholder="Contoh: Susu Ultra 1L" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
+            <input id="mat-name" className="input" placeholder="Contoh: Susu Ultra 1L" value={form.name} onChange={e => setForm({...form, name: e.target.value})} autoFocus />
           </div>
           <div className="price-inputs">
             <div className="input-group">
@@ -581,6 +581,14 @@ function RecipeModal({ product, materials, onClose, onSave }) {
     }))
   })
 
+  const listRef = useRef(null)
+
+  useEffect(() => {
+    if (listRef.current) {
+      listRef.current.scrollTop = listRef.current.scrollHeight
+    }
+  }, [items.length])
+
   const handleAddItem = (type = 'material') => {
     const firstMat = materials[0]
     setItems([...items, { 
@@ -631,7 +639,7 @@ function RecipeModal({ product, materials, onClose, onSave }) {
           <button className="modal-close" onClick={onClose}>✕</button>
         </div>
         <div className="modal-body">
-          <div className="recipe-editor-list">
+          <div className="recipe-editor-list" ref={listRef}>
             {items.map((item, idx) => {
                if (item.type === 'manual') {
                  return (
@@ -654,6 +662,7 @@ function RecipeModal({ product, materials, onClose, onSave }) {
                         placeholder="Harga (Rp)"
                         value={item.amount}
                         onChange={e => updateItem(idx, 'amount', e.target.value)}
+                        autoFocus={idx === items.length - 1}
                       />
                     </div>
                     <button className="btn-icon btn-red" onClick={() => handleRemoveItem(idx)}>
@@ -689,6 +698,7 @@ function RecipeModal({ product, materials, onClose, onSave }) {
                       style={{ width: 70 }} 
                       value={item.amount}
                       onChange={e => updateItem(idx, 'amount', e.target.value)}
+                      autoFocus={idx === items.length - 1}
                     />
                     <select 
                       className="select-sm" 
