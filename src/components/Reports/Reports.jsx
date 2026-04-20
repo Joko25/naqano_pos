@@ -26,6 +26,7 @@ export default function Reports() {
   const [expenses, setExpenses] = useState([])
   const [categories, setCategories] = useState([])
   const [prevTxs, setPrevTxs] = useState([])
+  const [allProducts, setAllProducts] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => { 
@@ -94,6 +95,7 @@ export default function Reports() {
     setPrevTxs(prevFiltered)
 
     setTxs(txWithItems)
+    setAllProducts(prods)
     setLoading(false)
   }
 
@@ -261,6 +263,9 @@ export default function Reports() {
               </button>
               <button className={`tab-btn ${activeTab === 'products' ? 'active' : ''}`} onClick={() => setActiveTab('products')}>
                 <PieChart size={14} /> Produk & Kategori
+              </button>
+              <button className={`tab-btn ${activeTab === 'pricing' ? 'active' : ''}`} onClick={() => setActiveTab('pricing')}>
+                <TrendingUp size={14} /> Analisis Harga
               </button>
               <button className={`tab-btn ${activeTab === 'time' ? 'active' : ''}`} onClick={() => setActiveTab('time')}>
                 <Clock size={14} /> Jam & Tren
@@ -474,6 +479,67 @@ export default function Reports() {
             </div>
           )}
 
+          {activeTab === 'pricing' && (
+            <div className="reports-tab-content">
+              <div className="report-card full-width">
+                <div className="report-card-title">💡 Rekomendasi & Analisis Harga Jual</div>
+                <div className="report-info-box">
+                  Rekomendasi dihitung untuk mencapai <strong>target margin 65%</strong> (Food Cost ~35%). 
+                  Gunakan data ini untuk mengevaluasi menu yang kurang menguntungkan.
+                </div>
+                <div style={{ overflowX: 'auto' }}>
+                  <table className="table">
+                    <thead>
+                      <tr>
+                        <th>Produk</th>
+                        <th>HPP (Modal)</th>
+                        <th>Harga Jual (Direct)</th>
+                        <th>Margin Saat Ini</th>
+                        <th>Status</th>
+                        <th className="text-amber">Rekomendasi Harga</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {allProducts.map(p => {
+                        const hpp = p.costPrice || 0
+                        const price = p.priceDirect || 0
+                        const profit = price - hpp
+                        const margin = price > 0 ? (profit / price) * 100 : 0
+                        
+                        // Target 65% margin -> HPP / 0.35
+                        const recommended = Math.ceil((hpp / 0.35) / 500) * 500
+                        
+                        let statusLine = { label: 'Ideal', class: 'badge-green' }
+                        if (margin < 40) statusLine = { label: 'Rugi/Tipis', class: 'badge-red' }
+                        else if (margin < 60) statusLine = { label: 'Dibawah Target', class: 'badge-amber' }
+                        else if (margin > 75) statusLine = { label: 'Profit Tinggi', class: 'badge-blue' }
+
+                        return (
+                          <tr key={p.id}>
+                            <td className="text-semibold">{p.emoji} {p.name}</td>
+                            <td>{formatRp(hpp)}</td>
+                            <td>{formatRp(price)}</td>
+                            <td>
+                               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                 <div className="margin-bar-wrap" style={{ flex: 1, minWidth: 60 }}>
+                                    <div className={`margin-bar ${margin < 50 ? 'bg-red' : ''}`} style={{ width: `${Math.min(100, Math.max(0, margin))}%` }}></div>
+                                 </div>
+                                 <span style={{ fontSize: 12, fontWeight: 600 }}>{margin.toFixed(0)}%</span>
+                               </div>
+                            </td>
+                            <td><span className={`badge ${statusLine.class}`}>{statusLine.label}</span></td>
+                            <td className="text-bold text-amber">
+                              {hpp > 0 ? formatRp(recommended) : 'Atur Resep Dulu'}
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
           {activeTab === 'time' && (
             <div className="reports-tab-content">
               <div className="reports-grid">

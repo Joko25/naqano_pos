@@ -169,12 +169,17 @@ export default function PaymentModal({ method, total, customerName, onClose }) {
       toast.success(isEdit ? 'Pesanan diperbarui! 📝' : 'Pesanan masuk antrean! ☕')
     } else {
       toast.success('Pembayaran Berhasil & Pesanan Selesai! 🎉')
+      // Auto-print logic
+      if (settings.autoPrint === 'true') {
+        setTimeout(() => printReceipt(receiptData), 500)
+      }
     }
   }
 
-  function printReceipt() {
+  function printReceipt(customData) {
+    const data = customData || receipt
     const w = window.open('', '_blank', 'width=400,height=700')
-    w.document.write(receiptHTML(receipt))
+    w.document.write(receiptHTML(data, settings))
     w.document.close()
     w.focus()
     setTimeout(() => { w.print(); w.close() }, 500)
@@ -202,7 +207,7 @@ export default function PaymentModal({ method, total, customerName, onClose }) {
           </div>
           <div className="modal-footer">
             <button className="btn btn-ghost" onClick={handleClose}>Transaksi Baru</button>
-            <button className="btn btn-amber" onClick={printReceipt}>🖨️ Print Struk</button>
+            <button className="btn btn-amber" onClick={() => printReceipt()}>🖨️ Print Struk</button>
           </div>
         </div>
       </div>
@@ -420,8 +425,13 @@ function ReceiptContent({ receipt }) {
   return (
     <div className="receipt-body">
       <div className="receipt-header">
-        {receipt.shopLogo && (
-          <img src={receipt.shopLogo} alt="logo" className="receipt-shop-logo" onError={(e) => { e.target.style.display = 'none' }} />
+        {receipt.shopLogo && receipt.shopLogo !== '/logo.png' && (
+          <img 
+            src={receipt.shopLogo} 
+            alt="logo" 
+            className="receipt-shop-logo" 
+            style={{ maxHeight: 60, maxWidth: 160, display: 'block', margin: '0 auto 10px' }}
+          />
         )}
         <div className="receipt-shop-name">{receipt.shopName}</div>
         <div className="receipt-shop-address">{receipt.shopAddress}</div>
@@ -465,24 +475,51 @@ function ReceiptContent({ receipt }) {
   )
 }
 
-function receiptHTML(receipt) {
-  const items = receipt.items.map(i =>
+function receiptHTML(receipt, settings = {}) {
+  const width = settings.printerWidth === '80mm' ? '360px' : '280px'
+  const fontSize = settings.receiptFontSize || '12px'
+  const dividerCount = settings.printerWidth === '80mm' ? 42 : 32
+
+  const items = (receipt?.items || []).map(i =>
     `<div class="ri"><span>${i.qty}x ${i.name} ${i.temp && i.temp !== 'None' ? `(${i.temp})` : ''}</span><span>${formatRp(i.price * i.qty)}</span></div>`
   ).join('')
   return `<!DOCTYPE html><html><head><meta charset="utf-8">
 <title>Struk #${receipt.receiptNo}</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Courier New', monospace; font-size: 12px; color: #000; background: #fff; padding: 8px; width: 280px; }
+  body { 
+    font-family: 'Courier New', monospace; 
+    font-size: ${fontSize}; 
+    color: #000; 
+    background: #fff; 
+    padding: 10px; 
+    width: ${width};
+    -webkit-print-color-adjust: exact;
+  }
+  .receipt-logo { display: block; margin: 0 auto 10px; max-height: 60px; max-width: 180px; object-fit: contain; }
   .sh { text-align: center; font-weight: bold; font-size: 16px; margin-bottom: 2px; }
-  .sa { text-align: center; font-size: 11px; margin-bottom: 8px; color: #444; }
+  .sa { text-align: center; font-size: 11px; margin-bottom: 8px; color: #000; line-height: 1.3; }
   .div { border-top: 1px dashed #000; margin: 6px 0; }
   .row { display: flex; justify-content: space-between; font-size: 11px; margin: 2px 0; }
   .ri { display: flex; justify-content: space-between; font-size: 11px; margin: 3px 0; }
   .total-row { font-weight: bold; font-size: 13px; margin-top: 4px; }
-  .footer { text-align: center; font-size: 11px; margin-top: 10px; color: #555; }
-  @media print { body { margin: 0; } @page { margin: 0; size: 58mm auto; } }
-</style></head><body>
+  .footer { text-align: center; font-size: 10px; margin-top: 12px; color: #555; }
+  
+  @media print { 
+    html, body { 
+      background: #fff; 
+      width: ${width};
+    }
+    @page { 
+      margin: 0; 
+      size: ${settings.printerWidth || '58mm'} auto;
+    }
+    /* Hide scrollbars, headers, footers added by browser */
+    ::-webkit-scrollbar { display: none; }
+  }
+</style>
+</head><body>
+${receipt.shopLogo && receipt.shopLogo !== '/logo.png' ? `<img src="${receipt.shopLogo}" class="receipt-logo" />` : ''}
 <div class="sh">${receipt.shopName}</div>
 <div class="sa">${receipt.shopAddress}</div>
 <div class="div"></div>

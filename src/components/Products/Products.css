@@ -62,3 +62,17 @@
 .temp-tag.ice { background: var(--blue-glow); color: var(--blue); }
 .temp-tag.hot { background: var(--red-glow); color: var(--red); }
 
+
+.pricing-advice {
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: var(--bg-hover);
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--amber);
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.text-red { color: var(--red); font-weight: bold; }
+.text-green { color: var(--green); font-weight: bold; }
+.text-amber { color: var(--amber); }

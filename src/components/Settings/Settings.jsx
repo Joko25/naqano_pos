@@ -219,6 +219,40 @@ export default function Settings({ onLogoChange }) {
           </div>
         </div>
 
+        {/* Printer Settings */}
+        <div className="settings-section">
+          <div className="settings-section-title"><Receipt size={15} strokeWidth={2} /> Pengaturan Printer Struk</div>
+          <div className="settings-grid">
+            <div className="input-group">
+              <label className="input-label">Lebar Kertas</label>
+              <select className="select" value={form.printerWidth || '58mm'} onChange={e => set('printerWidth', e.target.value)}>
+                <option value="58mm">58mm (Kecil)</option>
+                <option value="80mm">80mm (Besar)</option>
+              </select>
+            </div>
+            <div className="input-group">
+              <label className="input-label">Ukuran Huruf</label>
+              <select className="select" value={form.receiptFontSize || '12px'} onChange={e => set('receiptFontSize', e.target.value)}>
+                <option value="11px">Kecil</option>
+                <option value="12px">Normal</option>
+                <option value="14px">Besar</option>
+              </select>
+            </div>
+            <div className="input-group">
+              <label className="input-label">Auto-Print</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 8 }}>
+                 <input 
+                   type="checkbox" 
+                   id="auto-print-check"
+                   checked={form.autoPrint === 'true'} 
+                   onChange={e => set('autoPrint', String(e.target.checked))} 
+                 />
+                 <label htmlFor="auto-print-check" style={{ fontSize: 13, cursor: 'pointer' }}>Munculkan dialog print otomatis saat bayar</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Reset */}
         <div className="settings-section danger-zone">
           <div className="settings-section-title" style={{ color: 'var(--red)' }}>

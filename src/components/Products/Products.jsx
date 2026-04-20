@@ -28,7 +28,13 @@ export default function Products() {
 
   async function loadProducts() {
     const prods = await db.products.orderBy('name').toArray()
-    setProducts(prods)
+    const prodMats = await db.product_materials.toArray()
+    
+    const enriched = prods.map(p => ({
+      ...p,
+      hasRecipe: prodMats.some(pm => pm.productId === p.id)
+    }))
+    setProducts(enriched)
   }
 
   async function saveProduct(data) {
@@ -126,7 +132,10 @@ export default function Products() {
                   <td className="price-cell price-online">{formatRp(p.priceOnline)}</td>
                   <td>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                      <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>M: {formatRp(p.costPrice || 0)}</span>
+                      <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                        M: {formatRp(p.costPrice || 0)}
+                        {p.hasRecipe && <span className="badge badge-green" style={{ fontSize: '9px', padding: '1px 4px' }}>Resep ✨</span>}
+                      </span>
                       <span className={`badge ${((p.priceDirect - (p.costPrice || 0)) / (p.priceDirect || 1)) > 0.4 ? 'badge-green' : 'badge-amber'}`} style={{ fontSize: '10px' }}>
                         {Math.round(((p.priceDirect - (p.costPrice || 0)) / (p.priceDirect || 1)) * 100)}% Margin
                       </span>
@@ -192,6 +201,12 @@ function ProductFormModal({ open, onClose, onSave, initial, categories = [] }) {
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
+  const handleNumChange = (field, val) => {
+    if (val === '' || /^\d*\.?\d*$/.test(val)) {
+      set(field, val)
+    }
+  }
+
   const handleSubmit = () => {
     if (!form.name || !form.priceDirect || !form.priceOnline) {
       toast.error('Nama dan harga wajib diisi!')
@@ -201,8 +216,9 @@ function ProductFormModal({ open, onClose, onSave, initial, categories = [] }) {
       name: form.name,
       category: form.category,
       temp: form.temp || 'None',
-      priceDirect: parseInt(form.priceDirect, 10),
-      priceOnline: parseInt(form.priceOnline, 10),
+      priceDirect: parseFloat(form.priceDirect) || 0,
+      priceOnline: parseFloat(form.priceOnline) || 0,
+      costPrice: parseFloat(form.costPrice) || 0,
       emoji: form.emoji,
       isActive: form.isActive ? 1 : 0,
     })
@@ -261,22 +277,60 @@ function ProductFormModal({ open, onClose, onSave, initial, categories = [] }) {
         <div className="price-inputs">
           <div className="input-group">
             <label className="input-label" htmlFor="prod-price-d">🧍 Harga Langsung</label>
-            <input id="prod-price-d" className="input" type="number" value={form.priceDirect} onChange={e => set('priceDirect', e.target.value)} placeholder="22000" />
+            <input 
+              id="prod-price-d" 
+              className="input" 
+              type="text" 
+              inputMode="decimal"
+              value={form.priceDirect} 
+              onChange={e => handleNumChange('priceDirect', e.target.value)} 
+              placeholder="22000" 
+            />
           </div>
           <div className="input-group">
             <label className="input-label" htmlFor="prod-price-o">🛵 Harga Online (GoFood/dll)</label>
-            <input id="prod-price-o" className="input" type="number" value={form.priceOnline} onChange={e => set('priceOnline', e.target.value)} placeholder="27000" />
+            <input 
+              id="prod-price-o" 
+              className="input" 
+              type="text" 
+              inputMode="decimal"
+              value={form.priceOnline} 
+              onChange={e => handleNumChange('priceOnline', e.target.value)} 
+              placeholder="27000" 
+            />
           </div>
         </div>
 
         <div className="input-group">
           <label className="input-label" htmlFor="prod-cost">💰 Harga Modal (HPP)</label>
-          <input id="prod-cost" className="input" type="number" value={form.costPrice} onChange={e => set('costPrice', e.target.value)} placeholder="8000" />
+          <input 
+            id="prod-cost" 
+            className="input" 
+            type="text" 
+            inputMode="decimal"
+            value={form.costPrice} 
+            onChange={e => handleNumChange('costPrice', e.target.value)} 
+            placeholder="8000" 
+          />
+          {parseFloat(form.costPrice) > 0 && (
+            <div className="pricing-advice">
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                 <span>Rekomendasi Jual:</span>
+                 <strong className="text-amber">{formatRp(Math.ceil((parseFloat(form.costPrice) / 0.35) / 500) * 500)}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
+                 <span>Margin Saat Ini:</span>
+                 <span className={((parseFloat(form.priceDirect) - parseFloat(form.costPrice)) / parseFloat(form.priceDirect) * 100) < 50 ? 'text-red' : 'text-green'}>
+                   {form.priceDirect > 0 ? Math.round(((parseFloat(form.priceDirect) - parseFloat(form.costPrice)) / parseFloat(form.priceDirect)) * 100) : 0}%
+                 </span>
+              </div>
+            </div>
+          )}
         </div>
 
         {form.priceDirect && form.priceOnline && (
           <div className="price-diff-hint">
-            💡 Selisih harga: <strong>{formatRp(Math.abs(parseInt(form.priceOnline || 0) - parseInt(form.priceDirect || 0)))}</strong>
+            💡 Selisih harga: <strong>{formatRp(Math.abs(parseFloat(form.priceOnline || 0) - parseFloat(form.priceDirect || 0)))}</strong>
           </div>
         )}
 

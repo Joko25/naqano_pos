@@ -2,13 +2,14 @@ import Dexie from 'dexie'
 
 export const db = new Dexie('NaqanoPOS')
 
-db.version(3).stores({
+db.version(5).stores({
   products: '++id, name, category, isActive',
   transactions: '++id, createdAt, orderType, platform, paymentMethod, status',
   transactionItems: '++id, transactionId, productId',
   settings: 'key',
   categories: '++id, name',
   materials: '++id, name', // Bahan Baku (Susu, Kopi, dll)
+  product_materials: '++id, productId, materialId', // Relasi Produk & Bahan (Resep)
   purchases: '++id, date, supplier', // Log Belanja
   expenses: '++id, date, category', // Beban Operasional (Listrik, Sewa, dll)
 })
