@@ -524,7 +524,7 @@ export default function Reports() {
                                  <div className="margin-bar-wrap" style={{ flex: 1, minWidth: 60 }}>
                                     <div className={`margin-bar ${margin < 50 ? 'bg-red' : ''}`} style={{ width: `${Math.min(100, Math.max(0, margin))}%` }}></div>
                                  </div>
-                                 <span style={{ fontSize: 12, fontWeight: 600 }}>{margin.toFixed(0)}%</span>
+                                 <span style={{ fontSize: 12, fontWeight: 600 }}>{margin.toFixed(2)}%</span>
                                </div>
                             </td>
                             <td><span className={`badge ${statusLine.class}`}>{statusLine.label}</span></td>

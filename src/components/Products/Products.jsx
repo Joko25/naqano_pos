@@ -320,9 +320,9 @@ function ProductFormModal({ open, onClose, onSave, initial, categories = [] }) {
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
                  <span>Margin Saat Ini:</span>
-                 <span className={((parseFloat(form.priceDirect) - parseFloat(form.costPrice)) / parseFloat(form.priceDirect) * 100) < 50 ? 'text-red' : 'text-green'}>
-                   {form.priceDirect > 0 ? Math.round(((parseFloat(form.priceDirect) - parseFloat(form.costPrice)) / parseFloat(form.priceDirect)) * 100) : 0}%
-                 </span>
+                  <span className={((parseFloat(form.priceDirect) - parseFloat(form.costPrice)) / parseFloat(form.priceDirect) * 100) < 50 ? 'text-red' : 'text-green'}>
+                    {form.priceDirect > 0 ? ((parseFloat(form.priceDirect) - parseFloat(form.costPrice)) / parseFloat(form.priceDirect) * 100).toFixed(2) : 0}%
+                  </span>
               </div>
             </div>
           )}

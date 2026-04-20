@@ -1,6 +1,9 @@
 export function formatRp(amount) {
   if (amount === null || amount === undefined) return 'Rp 0'
-  return 'Rp ' + Number(amount).toLocaleString('id-ID')
+  return 'Rp ' + Number(amount).toLocaleString('id-ID', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  })
 }
 
 export function formatDate(date) {
