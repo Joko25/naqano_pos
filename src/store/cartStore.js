@@ -52,23 +52,29 @@ export const useCartStore = create((set, get) => ({
 
   addItem: (product) => {
     const items = get().items
-    const existing = items.find(i => i.id === product.id)
+    
+    // Create unique key based on id + variants + addons
+    const addonsKey = product.selectedAddons?.map(a => `${a.id}-${a.qty}`).sort().join('_') || ''
+    const variantsKey = product.variants?.sort().join('_') || ''
+    const cartItemId = product.cartItemId || `${product.id}-${variantsKey}-${addonsKey}`
+
+    const existing = items.find(i => (i.cartItemId || i.id) === cartItemId)
     if (existing) {
-      set({ items: items.map(i => i.id === product.id ? { ...i, qty: i.qty + 1 } : i) })
+      set({ items: items.map(i => (i.cartItemId || i.id) === cartItemId ? { ...i, qty: i.qty + 1 } : i) })
     } else {
-      set({ items: [...items, { ...product, qty: 1 }] })
+      set({ items: [...items, { ...product, cartItemId, qty: 1 }] })
     }
   },
 
-  removeItem: (productId) => {
-    set({ items: get().items.filter(i => i.id !== productId) })
+  removeItem: (cartItemId) => {
+    set({ items: get().items.filter(i => (i.cartItemId || i.id) !== cartItemId) })
   },
 
-  updateQty: (productId, qty) => {
+  updateQty: (cartItemId, qty) => {
     if (qty <= 0) {
-      set({ items: get().items.filter(i => i.id !== productId) })
+      set({ items: get().items.filter(i => (i.cartItemId || i.id) !== cartItemId) })
     } else {
-      set({ items: get().items.map(i => i.id === productId ? { ...i, qty } : i) })
+      set({ items: get().items.map(i => (i.cartItemId || i.id) === cartItemId ? { ...i, qty } : i) })
     }
   },
 
@@ -91,7 +97,8 @@ export const useCartStore = create((set, get) => ({
     const { items, orderType } = get()
     return items.reduce((sum, item) => {
       const price = orderType === 'online' ? item.priceOnline : item.priceDirect
-      return sum + price * item.qty
+      const addonsPrice = item.selectedAddons?.reduce((aSum, a) => aSum + (a.price * a.qty), 0) || 0
+      return sum + (price + addonsPrice) * item.qty
     }, 0)
   },
 

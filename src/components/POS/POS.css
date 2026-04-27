@@ -211,7 +211,127 @@
   font-size: 11px;
   color: var(--text-muted);
   text-decoration: line-through;
-  margin-top: 2px;
+}
+
+/* Variant Modal Styles */
+.variant-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.variant-product-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 16px;
+  border-bottom: 1px dashed var(--border);
+}
+
+.variant-product-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.variant-product-price {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--amber);
+}
+
+.variant-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.variant-section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.variant-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.variant-opt {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.variant-opt:hover {
+  border-color: var(--amber);
+}
+
+.variant-opt.active {
+  background: rgba(212, 175, 55, 0.1);
+  border-color: var(--amber);
+  color: var(--amber);
+  font-weight: 600;
+}
+
+.variant-addons-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.variant-addon-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.variant-addon-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.variant-addon-name {
+  font-size: 14px;
+  color: var(--text);
+  font-weight: 500;
+}
+
+.variant-addon-price {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.variant-addon-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn-addon-add {
+  padding: 4px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--amber);
+  background: transparent;
+  color: var(--amber);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-addon-add:hover {
+  background: var(--amber);
+  color: white;
 }
 
 .product-add-btn {

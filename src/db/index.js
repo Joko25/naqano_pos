@@ -2,7 +2,7 @@ import Dexie from 'dexie'
 
 export const db = new Dexie('NaqanoPOS')
 
-db.version(5).stores({
+db.version(6).stores({
   products: '++id, name, category, isActive',
   transactions: '++id, createdAt, orderType, platform, paymentMethod, status',
   transactionItems: '++id, transactionId, productId',
@@ -12,6 +12,7 @@ db.version(5).stores({
   product_materials: '++id, productId, materialId', // Relasi Produk & Bahan (Resep)
   purchases: '++id, date, supplier', // Log Belanja
   expenses: '++id, date, category', // Beban Operasional (Listrik, Sewa, dll)
+  addons: '++id, name, price, isActive', // Add-on options
 })
 
 // Seed default settings
@@ -63,7 +64,13 @@ db.on('populate', async () => {
     { name: 'Sedotan Hitam', unit: 'Pcs', stock: 500, lastPrice: 150 },
     { name: 'Creamer', unit: 'Kg', stock: 1, lastPrice: 45000 },
     { name: 'Es Batu', unit: 'Kg', stock: 1, lastPrice: 10000 },
+  ])
 
+  await db.addons.bulkAdd([
+    { name: 'Extra Espresso', price: 5000, isActive: 1 },
+    { name: 'Extra Susu', price: 3000, isActive: 1 },
+    { name: 'Vanilla Syrup', price: 4000, isActive: 1 },
+    { name: 'Caramel Syrup', price: 4000, isActive: 1 },
   ])
 })
 

@@ -10,6 +10,7 @@ import {
   DirectOrderIcon,
   OnlineOrderIcon,
 } from '../ui/PlatformLogos'
+import ProductVariantModal from './ProductVariantModal'
 import './POS.css'
 
 
@@ -24,6 +25,7 @@ export default function POSView() {
   const [categories, setCategories] = useState([])
   const [category, setCategory] = useState('Semua')
   const [search, setSearch] = useState('')
+  const [selectedProduct, setSelectedProduct] = useState(null)
   const { addItem, orderType, setOrderType, platform, setPlatform } = useCartStore()
 
   useEffect(() => {
@@ -48,7 +50,16 @@ export default function POSView() {
   })
 
   const handleAddItem = useCallback((product) => {
-    addItem(product)
+    if (product.category === 'Kopi' || product.category === 'Non-Kopi') {
+      setSelectedProduct(product)
+    } else {
+      // Direct add without variants
+      addItem({ ...product, variants: [], selectedAddons: [] })
+    }
+  }, [addItem])
+
+  const handleConfirmAdd = useCallback((productWithVariants) => {
+    addItem(productWithVariants)
   }, [addItem])
 
   return (
@@ -158,6 +169,14 @@ export default function POSView() {
           })
         )}
       </div>
+
+      <ProductVariantModal
+        product={selectedProduct}
+        open={!!selectedProduct}
+        onClose={() => setSelectedProduct(null)}
+        onAdd={handleConfirmAdd}
+        orderType={orderType}
+      />
     </div>
   )
 }

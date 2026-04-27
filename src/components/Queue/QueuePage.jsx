@@ -57,7 +57,9 @@ export default function QueuePage({ onNavigate }) {
       qty: item.qty,
       priceDirect: item.price,
       priceOnline: item.price,
-      costPrice: item.costPrice
+      costPrice: item.costPrice,
+      variants: item.variants || [],
+      selectedAddons: item.selectedAddons || []
     }))
 
     loadTransaction(order, cartItems, autoPay)
@@ -153,9 +155,21 @@ function OrderCard({ order, onUpdate, onEdit, onPrint }) {
 
       <div className="order-items">
         {order.items.map((item, i) => (
-          <div key={i} className="order-item-row">
-            <span className="item-qty">{item.qty}x</span>
-            <span className="item-name">{item.name} {item.temp !== 'None' ? `(${item.temp})` : ''}</span>
+          <div key={i} className="order-item-container" style={{ marginBottom: '8px' }}>
+            <div className="order-item-row">
+              <span className="item-qty">{item.qty}x</span>
+              <span className="item-name">{item.name} {item.temp !== 'None' ? `(${item.temp})` : ''}</span>
+            </div>
+            {item.variants && item.variants.length > 0 && (
+              <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginLeft: '24px', marginTop: '2px' }}>
+                {item.variants.join(', ')}
+              </div>
+            )}
+            {item.selectedAddons && item.selectedAddons.length > 0 && (
+              <div style={{ fontSize: '11px', color: 'var(--amber)', marginLeft: '24px', marginTop: '2px' }}>
+                {item.selectedAddons.map(a => `+${a.qty} ${a.name}`).join(', ')}
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -194,9 +208,22 @@ function OrderCard({ order, onUpdate, onEdit, onPrint }) {
 }
 
 function receiptHTML(receipt) {
-  const items = receipt.items.map(i =>
-    `<div class="ri"><span>${i.qty}x ${i.name} ${i.temp && i.temp !== 'None' ? `(${i.temp})` : ''}</span><span>${formatRp(i.price * i.qty)}</span></div>`
-  ).join('')
+  const items = receipt.items.map(i => {
+    let variantsHtml = ''
+    if (i.variants && i.variants.length > 0) {
+      variantsHtml += `<div style="font-size: 10px; color: #555; margin-left: 14px;">${i.variants.join(', ')}</div>`
+    }
+    if (i.selectedAddons && i.selectedAddons.length > 0) {
+      variantsHtml += `<div style="font-size: 10px; color: #555; margin-left: 14px;">${i.selectedAddons.map(a => `+${a.qty} ${a.name}`).join(', ')}</div>`
+    }
+    const itemAddonsPrice = i.selectedAddons?.reduce((s, a) => s + (a.price * a.qty), 0) || 0
+    const itemTotal = (i.price + itemAddonsPrice) * i.qty
+
+    return `<div>
+      <div class="ri"><span>${i.qty}x ${i.name} ${i.temp && i.temp !== 'None' ? `(${i.temp})` : ''}</span><span>${formatRp(itemTotal)}</span></div>
+      ${variantsHtml}
+    </div>`
+  }).join('')
   return `<!DOCTYPE html><html><head><meta charset="utf-8">
 <title>Struk #${receipt.receiptNo}</title>
 <style>

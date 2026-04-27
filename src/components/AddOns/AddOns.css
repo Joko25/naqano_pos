@@ -1,0 +1,112 @@
+.addons-page {
+  animation: fade-in 0.3s ease;
+  padding: 24px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.addons-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.addon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.addon-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s ease;
+}
+
+.addon-card:hover {
+  border-color: var(--amber);
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.1);
+  transform: translateY(-2px);
+}
+
+.addon-card.inactive {
+  opacity: 0.6;
+  filter: grayscale(1);
+}
+
+.addon-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.addon-name {
+  font-weight: 600;
+  color: var(--text);
+  font-size: 15px;
+}
+
+.addon-price {
+  font-size: 14px;
+  color: var(--amber);
+  font-weight: 500;
+}
+
+.addon-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.addon-toggle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-right: 8px;
+  padding-right: 12px;
+  border-right: 1px solid var(--border);
+}
+
+.addon-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+@media (max-width: 768px) {
+  .addons-page {
+    padding: 16px;
+  }
+  
+  .addon-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .addons-page {
+    padding: 12px;
+  }
+
+  .addons-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .addons-header .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .addon-grid {
+    grid-template-columns: 1fr;
+  }
+}

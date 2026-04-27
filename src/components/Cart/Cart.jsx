@@ -138,8 +138,12 @@ export default function Cart() {
         ) : (
           items.map(item => {
             const price = orderType === 'online' ? item.priceOnline : item.priceDirect
+            const addonsPrice = item.selectedAddons?.reduce((s, a) => s + (a.price * a.qty), 0) || 0
+            const itemTotal = (price + addonsPrice) * item.qty
+            const itemId = item.cartItemId || item.id
+
             return (
-              <div key={item.id} className="cart-item">
+              <div key={itemId} className="cart-item">
                 <div className="cart-item-left">
                   <span className="cart-item-emoji">{item.emoji || '☕'}</span>
                   <div className="cart-item-info">
@@ -149,16 +153,26 @@ export default function Cart() {
                         <span className={`cart-temp-tag ${item.temp.toLowerCase()}`}>{item.temp}</span>
                       )}
                     </div>
-                    <div className="cart-item-price">{formatRp(price)}</div>
+                    {item.variants && item.variants.length > 0 && (
+                      <div className="cart-item-variants">
+                        {item.variants.join(', ')}
+                      </div>
+                    )}
+                    {item.selectedAddons && item.selectedAddons.length > 0 && (
+                      <div className="cart-item-addons">
+                        {item.selectedAddons.map(a => `+ ${a.qty} ${a.name}`).join(', ')}
+                      </div>
+                    )}
+                    <div className="cart-item-price">{formatRp(price + addonsPrice)}</div>
                   </div>
                 </div>
                 <div className="cart-item-right">
                   <div className="qty-control">
-                    <button className="qty-btn" onClick={() => updateQty(item.id, item.qty - 1)}>−</button>
+                    <button className="qty-btn" onClick={() => updateQty(itemId, item.qty - 1)}>−</button>
                     <span className="qty-value">{item.qty}</span>
-                    <button className="qty-btn" onClick={() => updateQty(item.id, item.qty + 1)}>+</button>
+                    <button className="qty-btn" onClick={() => updateQty(itemId, item.qty + 1)}>+</button>
                   </div>
-                  <div className="cart-item-total">{formatRp(price * item.qty)}</div>
+                  <div className="cart-item-total">{formatRp(itemTotal)}</div>
                 </div>
               </div>
             )

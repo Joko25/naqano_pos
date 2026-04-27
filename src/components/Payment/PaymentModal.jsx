@@ -75,9 +75,20 @@ export default function PaymentModal({ method, total, customerName, onClose }) {
     Math.ceil(total / 50000) * 50000,
   ].filter((v, i, a) => a.indexOf(v) === i).filter(v => v >= total).slice(0, 4)
 
+  function formatItemText(items) {
+    return items.map(i => {
+      let txt = `- ${i.name} x${i.qty}`
+      if (i.variants && i.variants.length > 0) txt += `\n  (${i.variants.join(', ')})`
+      if (i.selectedAddons && i.selectedAddons.length > 0) {
+        txt += `\n  ` + i.selectedAddons.map(a => `+${a.qty} ${a.name}`).join(', ')
+      }
+      return txt
+    }).join('\n')
+  }
+
   function copyPaymentDetails() {
     const bankInfo = settings.bankName ? `\n\nTransfer ke:\n${settings.bankName} ${settings.bankAccount}\na/n ${settings.bankHolder}` : ''
-    const itemText = items.map(i => `- ${i.name} x${i.qty}`).join('\n')
+    const itemText = formatItemText(items)
     const text = `Halo ${customerName || 'Pelanggan'}, berikut rincian pesanan Anda di Naqano Coffee:\n\n${itemText}\n\nTotal: ${formatRp(total)}${bankInfo}\n\nTerima kasih! 🙏`
     
     navigator.clipboard.writeText(text)
@@ -86,7 +97,7 @@ export default function PaymentModal({ method, total, customerName, onClose }) {
 
   function shareToWhatsApp() {
     const bankInfo = settings.bankName ? `\n\nTransfer ke:\n${settings.bankName} ${settings.bankAccount}\na/n ${settings.bankHolder}` : ''
-    const itemText = items.map(i => `- ${i.name} x${i.qty}`).join('\n')
+    const itemText = formatItemText(items)
     const text = encodeURIComponent(`Halo ${customerName || 'Pelanggan'}, berikut rincian pesanan Anda di ${settings.shopName || 'Naqano Coffee'}:\n\n${itemText}\n\nTotal: ${formatRp(total)}${bankInfo}\n\nTerima kasih! 🙏`)
     window.open(`https://wa.me/?text=${text}`, '_blank')
   }
@@ -134,6 +145,10 @@ export default function PaymentModal({ method, total, customerName, onClose }) {
       txId = await db.transactions.add(txData)
     }
 
+    const getBasePrice = (item) => {
+      return orderType === 'online' ? (item.priceOnline || item.price) : (item.priceDirect || item.price)
+    }
+
     await db.transactionItems.bulkAdd(items.map(item => ({
       transactionId: txId,
       productId: item.productId || item.id,
@@ -141,8 +156,10 @@ export default function PaymentModal({ method, total, customerName, onClose }) {
       emoji: item.emoji,
       temp: item.temp || 'None',
       qty: item.qty,
-      price: orderType === 'online' ? (item.priceOnline || item.price) : (item.priceDirect || item.price),
+      price: getBasePrice(item),
       costPrice: item.costPrice || 0,
+      variants: item.variants || [],
+      selectedAddons: item.selectedAddons || [],
     })))
 
     const receiptData = {
@@ -157,8 +174,10 @@ export default function PaymentModal({ method, total, customerName, onClose }) {
         emoji: item.emoji,
         temp: item.temp || 'None',
         qty: item.qty,
-        price: orderType === 'online' ? (item.priceOnline || item.price) : (item.priceDirect || item.price),
+        price: getBasePrice(item),
         costPrice: item.costPrice || 0,
+        variants: item.variants || [],
+        selectedAddons: item.selectedAddons || [],
       })),
     }
 
@@ -449,12 +468,24 @@ function ReceiptContent({ receipt }) {
       </div>
       <div className="receipt-divider">{'─'.repeat(32)}</div>
       <div className="receipt-items">
-        {receipt.items.map((item, i) => (
-          <div key={i} className="receipt-item">
-            <div className="receipt-item-name">{item.qty}x {item.name} {item.temp && item.temp !== 'None' ? `(${item.temp})` : ''}</div>
-            <div className="receipt-item-total">{formatRp(item.price * item.qty)}</div>
-          </div>
-        ))}
+        {receipt.items.map((item, i) => {
+          const itemAddonsPrice = item.selectedAddons?.reduce((s, a) => s + (a.price * a.qty), 0) || 0
+          const itemTotal = (item.price + itemAddonsPrice) * item.qty
+          return (
+            <div key={i} className="receipt-item">
+              <div className="receipt-item-name">
+                <div style={{ fontWeight: '500' }}>{item.qty}x {item.name} {item.temp && item.temp !== 'None' ? `(${item.temp})` : ''}</div>
+                {item.variants && item.variants.length > 0 && (
+                  <div style={{ fontSize: '10px', color: '#666', marginTop: 1 }}>{item.variants.join(', ')}</div>
+                )}
+                {item.selectedAddons && item.selectedAddons.length > 0 && (
+                  <div style={{ fontSize: '10px', color: '#666', marginTop: 1 }}>{item.selectedAddons.map(a => `+${a.qty} ${a.name}`).join(', ')}</div>
+                )}
+              </div>
+              <div className="receipt-item-total">{formatRp(itemTotal)}</div>
+            </div>
+          )
+        })}
       </div>
       <div className="receipt-divider">{'─'.repeat(32)}</div>
       <div className="receipt-totals">
@@ -480,9 +511,22 @@ function receiptHTML(receipt, settings = {}) {
   const fontSize = settings.receiptFontSize || '12px'
   const dividerCount = settings.printerWidth === '80mm' ? 42 : 32
 
-  const items = (receipt?.items || []).map(i =>
-    `<div class="ri"><span>${i.qty}x ${i.name} ${i.temp && i.temp !== 'None' ? `(${i.temp})` : ''}</span><span>${formatRp(i.price * i.qty)}</span></div>`
-  ).join('')
+  const items = (receipt?.items || []).map(i => {
+    let variantsHtml = ''
+    if (i.variants && i.variants.length > 0) {
+      variantsHtml += `<div style="font-size: 10px; color: #555; margin-left: 14px;">${i.variants.join(', ')}</div>`
+    }
+    if (i.selectedAddons && i.selectedAddons.length > 0) {
+      variantsHtml += `<div style="font-size: 10px; color: #555; margin-left: 14px;">${i.selectedAddons.map(a => `+${a.qty} ${a.name}`).join(', ')}</div>`
+    }
+    const itemAddonsPrice = i.selectedAddons?.reduce((s, a) => s + (a.price * a.qty), 0) || 0
+    const itemTotal = (i.price + itemAddonsPrice) * i.qty
+
+    return `<div>
+      <div class="ri"><span>${i.qty}x ${i.name} ${i.temp && i.temp !== 'None' ? `(${i.temp})` : ''}</span><span>${formatRp(itemTotal)}</span></div>
+      ${variantsHtml}
+    </div>`
+  }).join('')
   return `<!DOCTYPE html><html><head><meta charset="utf-8">
 <title>Struk #${receipt.receiptNo}</title>
 <style>

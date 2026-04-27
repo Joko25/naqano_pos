@@ -2,19 +2,21 @@ import { useState, useEffect } from 'react'
 import {
   ShoppingCart, Package, BarChart2, Settings,
   Clock, Coffee, ArrowRight, ChevronLeft,
-  Tag, Menu, X, ChevronsLeft, ChevronsRight
+  Tag, Menu, X, ChevronsLeft, ChevronsRight, PlusCircle
 } from 'lucide-react'
 import POSView from './components/POS/POSView'
 import Cart from './components/Cart/Cart'
 import Products from './components/Products/Products'
 import Categories from './components/Categories/Categories'
+import AddOns from './components/AddOns/AddOns'
 import Inventory from './components/Inventory/Inventory'
 import QueuePage from './components/Queue/QueuePage'
 import Reports from './components/Reports/Reports'
 import SettingsPage from './components/Settings/Settings'
-import { Toast } from './components/ui'
-import { getAllSettings } from './db'
+import { Toast, toast } from './components/ui'
+import { db, getAllSettings } from './db'
 import { useCartStore } from './store/cartStore'
+import { runDailyAutoBackup } from './utils/autoBackup'
 import './App.css'
 
 const NAV_ITEMS = [
@@ -22,6 +24,7 @@ const NAV_ITEMS = [
   { id: 'queue',      label: 'Antrean',    Icon: Clock },
   { id: 'products',   label: 'Produk',     Icon: Package },
   { id: 'categories', label: 'Kategori',   Icon: Tag },
+  { id: 'addons',     label: 'Add-On',     Icon: PlusCircle },
   { id: 'inventory',  label: 'Bahan',      Icon: Coffee },
   { id: 'reports',    label: 'Laporan',    Icon: BarChart2 },
   { id: 'settings',   label: 'Pengaturan', Icon: Settings },
@@ -50,6 +53,30 @@ export default function App() {
       if (s.shopLogo) setShopLogo(s.shopLogo)
       if (s.taxPercent) setTaxPercent(Number.parseFloat(s.taxPercent))
     })
+
+    // Seed addons if empty (for users upgrading from v5 to v6)
+    db.addons.count().then(count => {
+      if (count === 0) {
+        db.addons.bulkAdd([
+          { name: 'Extra Espresso', price: 5000, isActive: 1 },
+          { name: 'Extra Susu', price: 3000, isActive: 1 },
+          { name: 'Vanilla Syrup', price: 4000, isActive: 1 },
+          { name: 'Caramel Syrup', price: 4000, isActive: 1 },
+        ])
+      }
+    })
+
+    // Auto-backup harian: jalankan sekali saat pertama buka di hari baru
+    runDailyAutoBackup()
+      .then(({ skipped, filename }) => {
+        if (!skipped) {
+          toast.success(`💾 Backup otomatis tersimpan: ${filename}`)
+        }
+      })
+      .catch(() => {
+        // Backup gagal — jangan crash app, cukup log di console
+      })
+
     const tick = setInterval(() => setNow(new Date()), 1000)
     return () => clearInterval(tick)
   }, [])
@@ -184,6 +211,7 @@ export default function App() {
             }
             if (page === 'products')   return <Products />
             if (page === 'categories') return <Categories />
+            if (page === 'addons')     return <AddOns />
             if (page === 'queue')      return <QueuePage onNavigate={setPage} />
             if (page === 'inventory')  return <Inventory />
             if (page === 'reports')    return <Reports />
