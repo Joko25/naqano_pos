@@ -3,7 +3,8 @@ import { db } from '../../db'
 import { Modal, ConfirmModal, EmptyState, Toggle, toast } from '../ui'
 import './AddOns.css'
 
-export default function AddOns() {
+export default function AddOns({ role }) {
+  const isCashier = role === 'CASHIER'
   const [addons, setAddons] = useState([])
   const [showForm, setShowForm] = useState(false)
   const [editAddon, setEditAddon] = useState(null)
@@ -45,12 +46,14 @@ export default function AddOns() {
     <div className="addons-page">
       <div className="addons-header">
         <h2 className="page-title">➕ Master Add-On</h2>
-        <button
-          className="btn btn-amber"
-          onClick={() => { setEditAddon(null); setShowForm(true) }}
-        >
-          + Tambah Add-On
-        </button>
+        {!isCashier && (
+          <button
+            className="btn btn-amber"
+            onClick={() => { setEditAddon(null); setShowForm(true) }}
+          >
+            + Tambah Add-On
+          </button>
+        )}
       </div>
 
       {addons.length === 0 ? (
@@ -58,11 +61,11 @@ export default function AddOns() {
           icon="➕"
           title="Belum ada Add-On"
           subtitle="Tambah pilihan tambahan (seperti Extra Shot, Extra Susu) untuk pesanan."
-          action={
+          action={!isCashier && (
             <button className="btn btn-amber" onClick={() => setShowForm(true)}>
               + Tambah Add-On
             </button>
-          }
+          )}
         />
       ) : (
         <div className="addon-grid">
@@ -72,30 +75,32 @@ export default function AddOns() {
                 <div className="addon-name">{addon.name}</div>
                 <div className="addon-price">Rp {addon.price.toLocaleString('id-ID')}</div>
               </div>
-              <div className="addon-actions">
-                <div className="addon-toggle">
-                  <span className="text-xs">{addon.isActive ? 'Aktif' : 'Nonaktif'}</span>
-                  <Toggle
-                    id={`tgl-${addon.id}`}
-                    checked={addon.isActive === 1}
-                    onChange={() => toggleStatus(addon.id, addon.isActive)}
-                  />
+              {!isCashier && (
+                <div className="addon-actions">
+                  <div className="addon-toggle">
+                    <span className="text-xs">{addon.isActive ? 'Aktif' : 'Nonaktif'}</span>
+                    <Toggle
+                      id={`tgl-${addon.id}`}
+                      checked={addon.isActive === 1}
+                      onChange={() => toggleStatus(addon.id, addon.isActive)}
+                    />
+                  </div>
+                  <button
+                    className="btn btn-ghost btn-sm"
+                    onClick={() => { setEditAddon(addon); setShowForm(true) }}
+                  >
+                    ✏️
+                  </button>
+                  <button
+                    className="btn btn-sm"
+                    style={{ background: 'var(--red-glow)', color: 'var(--red)' }}
+                    onClick={() => setConfirmId(addon.id)}
+                    title="Hapus Add-On"
+                  >
+                    🗑️
+                  </button>
                 </div>
-                <button
-                  className="btn btn-ghost btn-sm"
-                  onClick={() => { setEditAddon(addon); setShowForm(true) }}
-                >
-                  ✏️
-                </button>
-                <button
-                  className="btn btn-sm"
-                  style={{ background: 'var(--red-glow)', color: 'var(--red)' }}
-                  onClick={() => setConfirmId(addon.id)}
-                  title="Hapus Add-On"
-                >
-                  🗑️
-                </button>
-              </div>
+              )}
             </div>
           ))}
         </div>

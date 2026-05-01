@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import {
   Image, Store, DollarSign, Building2, Smartphone,
   AlertTriangle, Save, FolderOpen, Trash2, Receipt, Percent,
-  Download, Upload, RefreshCw
+  Download, Upload, RefreshCw, Lock
 } from 'lucide-react'
 import { getAllSettings, setSetting, exportDatabase, importDatabase } from '../../db'
 import { toast } from '../ui'
@@ -16,11 +16,28 @@ const FIELDS = [
 
 export default function Settings({ onLogoChange }) {
   const [form, setForm] = useState({})
+  
+  const licenseType = (() => {
+    try {
+      return JSON.parse(localStorage.getItem('bestari_license'))?.type || 'TRIAL'
+    } catch {
+      return 'TRIAL'
+    }
+  })()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [cashiers, setCashiers] = useState([])
+  const [newCashierName, setNewCashierName] = useState('')
+  const [newCashierPin, setNewCashierPin] = useState('')
 
   useEffect(() => {
-    getAllSettings().then(s => { setForm(s); setLoading(false) })
+    getAllSettings().then(s => { 
+      setForm(s)
+      if (s.cashiers) {
+        try { setCashiers(JSON.parse(s.cashiers)) } catch (e) {}
+      }
+      setLoading(false) 
+    })
   }, [])
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
@@ -30,8 +47,40 @@ export default function Settings({ onLogoChange }) {
     for (const [k, v] of Object.entries(form)) {
       await setSetting(k, v)
     }
+    await setSetting('cashiers', JSON.stringify(cashiers))
+    toast.success('Pengaturan disimpan')
     setSaving(false)
-    toast.success('Pengaturan berhasil disimpan ✅')
+  }
+
+  const addCashier = async () => {
+    if (!newCashierName || newCashierPin.length !== 6) {
+      toast.error('Nama wajib diisi dan PIN harus tepat 6 angka')
+      return
+    }
+
+    if (newCashierPin === form.ownerPin) {
+      toast.error('PIN ini tidak bisa digunakan (bentrok dengan PIN Owner)')
+      return
+    }
+
+    if (cashiers.some(c => c.pin === newCashierPin)) {
+      toast.error('PIN ini sudah digunakan oleh kasir lain')
+      return
+    }
+    const newCashier = { id: Date.now(), name: newCashierName, pin: newCashierPin }
+    const updated = [...cashiers, newCashier]
+    setCashiers(updated)
+    await setSetting('cashiers', JSON.stringify(updated))
+    toast.success('Kasir berhasil ditambahkan')
+    setNewCashierName('')
+    setNewCashierPin('')
+  }
+
+  const removeCashier = async (id) => {
+    const updated = cashiers.filter(c => c.id !== id)
+    setCashiers(updated)
+    await setSetting('cashiers', JSON.stringify(updated))
+    toast.success('Kasir dihapus')
   }
 
   function handleLogoUpload(e) {
@@ -253,6 +302,60 @@ export default function Settings({ onLogoChange }) {
           </div>
         </div>
 
+        {/* Pegawai / Kasir */}
+        <div className="settings-section">
+          <div className="settings-section-title"><Lock size={15} strokeWidth={2} /> Manajemen Pegawai (Kasir)</div>
+          <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 16 }}>
+            Tambahkan akun Kasir. Kasir tidak bisa mengakses menu Pengaturan dan Laporan.
+          </p>
+          
+          <div style={{ background: 'var(--bg-hover)', padding: 16, borderRadius: 'var(--radius-md)', marginBottom: 16 }}>
+            <div className="cashier-form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: 12, alignItems: 'end' }}>
+              <div>
+                <label className="input-label" style={{ fontSize: 12 }}>Nama Kasir</label>
+                <input 
+                  className="input" 
+                  placeholder="Misal: Budi" 
+                  value={newCashierName}
+                  onChange={e => setNewCashierName(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="input-label" style={{ fontSize: 12 }}>PIN Kasir (6 Angka)</label>
+                <input 
+                  className="input" 
+                  type="password"
+                  placeholder="6 Angka"
+                  pattern="[0-9]*"
+                  inputMode="numeric"
+                  value={newCashierPin}
+                  onChange={e => setNewCashierPin(e.target.value.replace(/[^0-9]/g, ''))}
+                  maxLength={6}
+                />
+              </div>
+              <button className="btn btn-primary" onClick={addCashier}>
+                + Tambah
+              </button>
+            </div>
+          </div>
+
+          {cashiers.length > 0 && (
+            <div style={{ border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
+              {cashiers.map((c, idx) => (
+                <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 16px', borderBottom: idx < cashiers.length - 1 ? '1px solid var(--border-color)' : 'none', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <strong style={{ fontSize: 14 }}>{c.name}</strong>
+                    <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>PIN: **** (Kasir)</span>
+                  </div>
+                  <button className="btn btn-ghost" style={{ color: 'var(--red)', padding: '6px' }} onClick={() => removeCashier(c.id)}>
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* Reset */}
         <div className="settings-section danger-zone">
           <div className="settings-section-title" style={{ color: 'var(--red)' }}>
@@ -272,46 +375,57 @@ export default function Settings({ onLogoChange }) {
         {/* Database: Backup & Restore */}
         <div className="settings-section">
           <div className="settings-section-title"><RefreshCw size={15} strokeWidth={2} /> Database: Backup & Restore</div>
-          <div className="settings-grid">
-            <div className="input-group" style={{ gridColumn: '1 / -1' }}>
-              <label className="input-label">Auto-Backup Harian</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 8 }}>
-                 <input 
-                   type="checkbox" 
-                   id="auto-backup-check"
-                   checked={form.autoBackup === 'true'} 
-                   onChange={e => set('autoBackup', String(e.target.checked))} 
-                 />
-                 <label htmlFor="auto-backup-check" style={{ fontSize: 13, cursor: 'pointer' }}>Download file backup otomatis saat aplikasi pertama kali dibuka (sehari sekali)</label>
+          {licenseType === 'TRIAL' ? (
+            <div style={{ padding: '20px', background: 'var(--bg-hover)', borderRadius: 'var(--radius-md)', color: 'var(--text-secondary)', fontSize: 14 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, color: 'var(--tosca)', fontWeight: 'bold' }}>
+                <Lock size={16} /> Fitur Premium Terkunci
               </div>
+              Maaf, fitur Ekspor/Impor Database dan Auto-Backup harian hanya tersedia untuk <strong>Lisensi Premium</strong>. Tingkatkan lisensi Anda untuk mengamankan data transaksi kedai Anda secara penuh!
             </div>
-          </div>
-          <div className="db-controls" style={{ marginTop: 16 }}>
-            <div className="db-card">
-              <div className="db-icon bg-green"><Download size={18} /></div>
-              <div className="db-info">
-                <strong>Ekspor Data (Backup)</strong>
-                <p>Simpan semua data (produk, transaksi, stok) ke dalam file JSON.</p>
+          ) : (
+            <>
+              <div className="settings-grid">
+                <div className="input-group" style={{ gridColumn: '1 / -1' }}>
+                  <label className="input-label">Auto-Backup Harian</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 8 }}>
+                    <input 
+                      type="checkbox" 
+                      id="auto-backup-check"
+                      checked={form.autoBackup === 'true'} 
+                      onChange={e => set('autoBackup', String(e.target.checked))} 
+                    />
+                    <label htmlFor="auto-backup-check" style={{ fontSize: 13, cursor: 'pointer' }}>Download file backup otomatis saat aplikasi pertama kali dibuka (sehari sekali)</label>
+                  </div>
+                </div>
               </div>
-              <button className="btn btn-outline" onClick={handleExport}>Download Backup</button>
-            </div>
-            
-            <div className="db-card">
-              <div className="db-icon bg-amber"><Upload size={18} /></div>
-              <div className="db-info">
-                <strong>Impor Data (Restore)</strong>
-                <p>Pindahkan data dari device lain. Semua data saat ini akan terhapus!</p>
+              <div className="db-controls" style={{ marginTop: 16 }}>
+                <div className="db-card">
+                  <div className="db-icon bg-green"><Download size={18} /></div>
+                  <div className="db-info">
+                    <strong>Ekspor Data (Backup)</strong>
+                    <p>Simpan semua data (produk, transaksi, stok) ke dalam file JSON.</p>
+                  </div>
+                  <button className="btn btn-outline" onClick={handleExport}>Download Backup</button>
+                </div>
+                
+                <div className="db-card">
+                  <div className="db-icon bg-amber"><Upload size={18} /></div>
+                  <div className="db-info">
+                    <strong>Impor Data (Restore)</strong>
+                    <p>Pindahkan data dari device lain. Semua data saat ini akan terhapus!</p>
+                  </div>
+                  <label className="btn btn-outline btn-restore" htmlFor="db-import-input">Pilih File Backup</label>
+                  <input
+                    id="db-import-input"
+                    type="file"
+                    accept=".json"
+                    style={{ display: 'none' }}
+                    onChange={handleImport}
+                  />
+                </div>
               </div>
-              <label className="btn btn-outline btn-restore" htmlFor="db-import-input">Pilih File Backup</label>
-              <input
-                 id="db-import-input"
-                 type="file"
-                 accept=".json"
-                 style={{ display: 'none' }}
-                 onChange={handleImport}
-              />
-            </div>
-          </div>
+            </>
+          )}
         </div>
       </div>
     </div>

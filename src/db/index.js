@@ -18,60 +18,55 @@ db.version(6).stores({
 // Seed default settings
 db.on('populate', async () => {
   await db.settings.bulkPut([
-    { key: 'shopName', value: 'Naqano Coffee' },
-    { key: 'shopAddress', value: 'Relife Greenville Cileungsi cluster Flowerville Extension Blok HA27' },
-    { key: 'shopPhone', value: '081291070705' },
+    { key: 'shopName', value: 'Bestari POS' },
+    { key: 'shopAddress', value: 'Jl. Jenderal Sudirman No. 1, Jakarta Pusat' },
+    { key: 'shopPhone', value: '081234567890' },
     { key: 'taxPercent', value: 0 },
-    { key: 'qrisNumber', value: '00020101021126610014COM.GO-JEK.WWW01189360091438630037910210G8630037910303UMI51440014ID.CO.QRIS.WWW0215ID10254364052250303UMI5204581253033605802ID5925naqano, Makanan & Minuman6006BEKASI61051732062070703A016304CA42' },
+    { key: 'qrisNumber', value: '' },
     { key: 'bankName', value: 'BCA' },
-    { key: 'bankAccount', value: '5211464187' },
-    { key: 'bankHolder', value: 'Nur Hasanah' },
-    { key: 'shopLogo', value: '/logo.png' },
-    { key: 'receiptFooter', value: 'Terima kasih sudah berkunjung! ☕' },
+    { key: 'bankAccount', value: '1234567890' },
+    { key: 'bankHolder', value: 'Nama Pemilik' },
+    { key: 'shopLogo', value: '' },
+    { key: 'receiptFooter', value: 'Terima kasih atas kunjungan Anda! 🙏' },
     { key: 'autoBackup', value: 'false' },
   ])
 
   await db.categories.bulkAdd([
     { name: 'Kopi', icon: '☕' },
     { name: 'Non-Kopi', icon: '🧃' },
-    { name: 'Makanan', icon: '🍞' },
-    { name: 'Camilan', icon: '🍪' },
+    { name: 'Makanan', icon: '🍝' },
+    { name: 'Camilan', icon: '🍟' },
   ])
 
   await db.products.bulkAdd([
-    { name: 'Kopi Suga', category: 'Kopi', temp: 'Ice', priceDirect: 15000, priceOnline: 20000, costPrice: 7200, stock: 99, isActive: 1, emoji: '☕' },
-    { name: 'Vanilla Latte', category: 'Kopi', temp: 'Ice', priceDirect: 15000, priceOnline: 20000, costPrice: 7800, stock: 99, isActive: 1, emoji: '☕' },
-    { name: 'Vanilla Butterscoth', category: 'Kopi', temp: 'Ice', priceDirect: 15000, priceOnline: 20000, costPrice: 11000, stock: 99, isActive: 1, emoji: '☕' },
-    { name: 'Spanish Latte', category: 'Kopi', temp: 'Ice', priceDirect: 15000, priceOnline: 20000, costPrice: 9000, stock: 99, isActive: 1, emoji: '☕' },
-    { name: 'Butterscoth Creany Foam', category: 'Kopi', temp: 'Ice', priceDirect: 17000, priceOnline: 22000, costPrice: 10000, stock: 99, isActive: 1, emoji: '☕' },
-    { name: 'Americano', category: 'Kopi', temp: 'Ice', priceDirect: 10000, priceOnline: 15000, costPrice: 4000, stock: 99, isActive: 1, emoji: '☕' },
-    { name: 'Caffe Latte', category: 'Kopi', temp: 'Ice', priceDirect: 12000, priceOnline: 17000, costPrice: 7000, stock: 99, isActive: 1, emoji: '☕' },
-    { name: 'V60 Pour Over', category: 'Kopi', temp: 'Hot', priceDirect: 35000, priceOnline: 40000, costPrice: 12000, stock: 99, isActive: 1, emoji: '☕' },
-    { name: 'Cappuccino', category: 'Kopi', temp: 'Hot', priceDirect: 28000, priceOnline: 33000, costPrice: 10000, stock: 99, isActive: 1, emoji: '☕' },
-    { name: 'Matcha Latte', category: 'Non-Kopi', temp: 'Ice', priceDirect: 28000, priceOnline: 33000, costPrice: 11000, stock: 99, isActive: 1, emoji: '🍵' },
-    { name: 'Teh Tarik', category: 'Non-Kopi', temp: 'Ice', priceDirect: 18000, priceOnline: 23000, costPrice: 6000, stock: 99, isActive: 1, emoji: '🧋' },
-    { name: 'Chocono', category: 'Non-Kopi', temp: 'Ice', priceDirect: 12000, priceOnline: 17000, costPrice: 5000, stock: 99, isActive: 1, emoji: '🍫' },
-    { name: 'Croissant', category: 'Makanan', temp: 'None', priceDirect: 22000, priceOnline: 27000, costPrice: 12000, stock: 30, isActive: 1, emoji: '🥐' },
-    { name: 'Roti Bakar', category: 'Makanan', temp: 'None', priceDirect: 18000, priceOnline: 23000, costPrice: 8000, stock: 30, isActive: 1, emoji: '🍞' },
-    { name: 'Cookies', category: 'Camilan', temp: 'None', priceDirect: 15000, priceOnline: 19000, costPrice: 7000, stock: 50, isActive: 1, emoji: '🍪' },
+    { name: 'Espresso', category: 'Kopi', temp: 'Hot', priceDirect: 15000, priceOnline: 18000, costPrice: 5000, stock: 99, isActive: 1, emoji: '☕' },
+    { name: 'Americano', category: 'Kopi', temp: 'Ice', priceDirect: 18000, priceOnline: 22000, costPrice: 6000, stock: 99, isActive: 1, emoji: '☕' },
+    { name: 'Cafe Latte', category: 'Kopi', temp: 'Ice', priceDirect: 22000, priceOnline: 27000, costPrice: 9000, stock: 99, isActive: 1, emoji: '☕' },
+    { name: 'Cappuccino', category: 'Kopi', temp: 'Hot', priceDirect: 22000, priceOnline: 27000, costPrice: 9000, stock: 99, isActive: 1, emoji: '☕' },
+    { name: 'Caramel Macchiato', category: 'Kopi', temp: 'Ice', priceDirect: 25000, priceOnline: 30000, costPrice: 11000, stock: 99, isActive: 1, emoji: '☕' },
+    { name: 'Matcha Latte', category: 'Non-Kopi', temp: 'Ice', priceDirect: 24000, priceOnline: 29000, costPrice: 10000, stock: 99, isActive: 1, emoji: '🍵' },
+    { name: 'Taro Latte', category: 'Non-Kopi', temp: 'Ice', priceDirect: 24000, priceOnline: 29000, costPrice: 10000, stock: 99, isActive: 1, emoji: '🧋' },
+    { name: 'Chocolate Ice', category: 'Non-Kopi', temp: 'Ice', priceDirect: 20000, priceOnline: 25000, costPrice: 8000, stock: 99, isActive: 1, emoji: '🍫' },
+    { name: 'Nasi Goreng Spesial', category: 'Makanan', temp: 'None', priceDirect: 30000, priceOnline: 36000, costPrice: 15000, stock: 50, isActive: 1, emoji: '🍝' },
+    { name: 'Mie Goreng Telur', category: 'Makanan', temp: 'None', priceDirect: 25000, priceOnline: 30000, costPrice: 12000, stock: 50, isActive: 1, emoji: '🍜' },
+    { name: 'French Fries', category: 'Camilan', temp: 'None', priceDirect: 15000, priceOnline: 18000, costPrice: 6000, stock: 50, isActive: 1, emoji: '🍟' },
+    { name: 'Mix Platter', category: 'Camilan', temp: 'None', priceDirect: 25000, priceOnline: 30000, costPrice: 10000, stock: 50, isActive: 1, emoji: '🍗' },
   ])
 
   await db.materials.bulkAdd([
-    { name: 'Susu UHT Full Cream (1L)', unit: 'Pcs', stock: 12, lastPrice: 18000 },
-    { name: 'Biji Kopi House Blend (1kg)', unit: 'Pcs', stock: 5, lastPrice: 165000 },
-    { name: 'Gula Aren Cair (1L)', unit: 'Pcs', stock: 8, lastPrice: 45000 },
-    { name: 'Sirup Vanilla (750ml)', unit: 'Pcs', stock: 3, lastPrice: 95000 },
-    { name: 'Cup Dingin 12oz', unit: 'Pcs', stock: 250, lastPrice: 600 },
-    { name: 'Sedotan Hitam', unit: 'Pcs', stock: 500, lastPrice: 150 },
-    { name: 'Creamer', unit: 'Kg', stock: 1, lastPrice: 45000 },
-    { name: 'Es Batu', unit: 'Kg', stock: 1, lastPrice: 10000 },
+    { name: 'Biji Kopi Espresso Blend (1kg)', unit: 'Kg', stock: 5, lastPrice: 120000 },
+    { name: 'Susu UHT Full Cream (1L)', unit: 'Pcs', stock: 24, lastPrice: 18000 },
+    { name: 'Gula Aren Cair (1L)', unit: 'Pcs', stock: 10, lastPrice: 45000 },
+    { name: 'Sirup Karamel (750ml)', unit: 'Pcs', stock: 5, lastPrice: 95000 },
+    { name: 'Cup Plastik 14oz (1 Roll)', unit: 'Pcs', stock: 10, lastPrice: 25000 },
+    { name: 'Paper Cup 8oz (1 Roll)', unit: 'Pcs', stock: 10, lastPrice: 20000 },
   ])
 
   await db.addons.bulkAdd([
-    { name: 'Extra Espresso', price: 5000, isActive: 1 },
-    { name: 'Extra Susu', price: 3000, isActive: 1 },
-    { name: 'Vanilla Syrup', price: 4000, isActive: 1 },
-    { name: 'Caramel Syrup', price: 4000, isActive: 1 },
+    { name: 'Extra Shot Espresso', price: 5000, isActive: 1 },
+    { name: 'Oat Milk Upgrade', price: 8000, isActive: 1 },
+    { name: 'Extra Syrup', price: 4000, isActive: 1 },
+    { name: 'Takeaway Packaging', price: 2000, isActive: 1 },
   ])
 })
 

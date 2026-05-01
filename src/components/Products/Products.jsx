@@ -10,7 +10,8 @@ const TEMP_OPTIONS = [
   { value: 'Hot', label: 'Hot', icon: '🔥' },
 ]
 
-export default function Products() {
+export default function Products({ role }) {
+  const isCashier = role === 'CASHIER'
   const [products, setProducts] = useState([])
   const [categories, setCategories] = useState([])
   const [showForm, setShowForm] = useState(false)
@@ -71,9 +72,11 @@ export default function Products() {
     <div className="products-page">
       <div className="products-header">
         <h2 className="page-title">📦 Kelola Produk</h2>
-        <button className="btn btn-amber" onClick={() => { setEditProduct(null); setShowForm(true) }}>
-          + Tambah Produk
-        </button>
+        {!isCashier && (
+          <button className="btn btn-amber" onClick={() => { setEditProduct(null); setShowForm(true) }}>
+            + Tambah Produk
+          </button>
+        )}
       </div>
 
       <div className="products-toolbar">
@@ -108,15 +111,15 @@ export default function Products() {
                 <th>Kategori</th>
                 <th>Harga Langsung</th>
                 <th>Harga Online</th>
-                <th>Margin</th>
+                {!isCashier && <th>Margin</th>}
                 <th>Status</th>
-                <th>Aksi</th>
+                {!isCashier && <th>Aksi</th>}
               </tr>
             </thead>
             <tbody>
               {filtered.map(p => (
                 <tr key={p.id}>
-                  <td>
+                  <td data-label="">
                     <div className="product-row-info">
                       <span className="product-row-emoji">{p.emoji || '☕'}</span>
                       <div className="product-row-name-wrap">
@@ -127,38 +130,44 @@ export default function Products() {
                       </div>
                     </div>
                   </td>
-                  <td><span className="badge badge-amber">{p.category}</span></td>
-                  <td className="price-cell">{formatRp(p.priceDirect)}</td>
-                  <td className="price-cell price-online">{formatRp(p.priceOnline)}</td>
-                  <td>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                      <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                        M: {formatRp(p.costPrice || 0)}
-                        {p.hasRecipe && <span className="badge badge-green" style={{ fontSize: '9px', padding: '1px 4px' }}>Resep ✨</span>}
-                      </span>
-                      <span className={`badge ${((p.priceDirect - (p.costPrice || 0)) / (p.priceDirect || 1)) > 0.4 ? 'badge-green' : 'badge-amber'}`} style={{ fontSize: '10px' }}>
-                        {Math.round(((p.priceDirect - (p.costPrice || 0)) / (p.priceDirect || 1)) * 100)}% Margin
-                      </span>
-                    </div>
-                  </td>
-                  <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <td data-label="Kategori"><span className="badge badge-amber">{p.category}</span></td>
+                  <td data-label="Harga Langsung" className="price-cell">{formatRp(p.priceDirect)}</td>
+                  <td data-label="Harga Online" className="price-cell price-online">{formatRp(p.priceOnline)}</td>
+                  {!isCashier && (
+                    <td data-label="HPP & Margin">
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'flex-end' }}>
+                        <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                          M: {formatRp(p.costPrice || 0)}
+                          {p.hasRecipe && <span className="badge badge-green" style={{ fontSize: '9px', padding: '1px 4px' }}>Resep ✨</span>}
+                        </span>
+                        <span className={`badge ${((p.priceDirect - (p.costPrice || 0)) / (p.priceDirect || 1)) > 0.4 ? 'badge-green' : 'badge-amber'}`} style={{ fontSize: '10px' }}>
+                          {Math.round(((p.priceDirect - (p.costPrice || 0)) / (p.priceDirect || 1)) * 100)}% Margin
+                        </span>
+                      </div>
+                    </td>
+                  )}
+                  <td data-label="Status">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'flex-end' }}>
                       <span className={`badge ${p.isActive ? 'badge-green' : 'badge-red'}`} style={{ minWidth: '75px', justifyContent: 'center' }}>
                         {p.isActive ? 'Aktif' : 'Non-aktif'}
                       </span>
-                      <Toggle
-                        id={`toggle-${p.id}`}
-                        checked={!!p.isActive}
-                        onChange={() => toggleActive(p.id, p.isActive)}
-                      />
+                      {!isCashier && (
+                        <Toggle
+                          id={`toggle-${p.id}`}
+                          checked={!!p.isActive}
+                          onChange={() => toggleActive(p.id, p.isActive)}
+                        />
+                      )}
                     </div>
                   </td>
-                  <td>
-                    <div style={{ display: 'flex', gap: 6 }}>
-                      <button className="btn btn-ghost btn-sm" onClick={() => { setEditProduct(p); setShowForm(true) }}>✏️ Edit</button>
-                      <button className="btn btn-sm" style={{ background: 'var(--red-glow)', color: 'var(--red)' }} onClick={() => setConfirmId(p.id)}>🗑️</button>
-                    </div>
-                  </td>
+                  {!isCashier && (
+                    <td data-label="">
+                      <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                        <button className="btn btn-ghost btn-sm" onClick={() => { setEditProduct(p); setShowForm(true) }}>✏️ Edit</button>
+                        <button className="btn btn-sm" style={{ background: 'var(--red-glow)', color: 'var(--red)' }} onClick={() => setConfirmId(p.id)}>🗑️</button>
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

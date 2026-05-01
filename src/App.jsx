@@ -1,14 +1,18 @@
 import { useState, useEffect } from 'react'
-import {
-  ShoppingCart, Package, BarChart2, Settings,
-  Clock, Coffee, ArrowRight, ChevronLeft,
-  Tag, Menu, X, ChevronsLeft, ChevronsRight, PlusCircle
+import { 
+  Coffee, BarChart2, Settings, ShoppingBag, 
+  Menu, X, Clock, Package, Tag,
+  ChevronsLeft, ChevronsRight, PlusCircle, Lock,
+  ArrowRight, ChevronLeft, ShoppingCart
 } from 'lucide-react'
 import POSView from './components/POS/POSView'
 import Cart from './components/Cart/Cart'
 import Products from './components/Products/Products'
 import Categories from './components/Categories/Categories'
 import LandingPage from './components/Landing/LandingPage'
+import AuthPage from './components/Auth/AuthPage'
+import PinLogin from './components/Auth/PinLogin'
+import OwnerSetup from './components/Auth/OwnerSetup'
 import AddOns from './components/AddOns/AddOns'
 import Inventory from './components/Inventory/Inventory'
 import QueuePage from './components/Queue/QueuePage'
@@ -32,54 +36,34 @@ const NAV_ITEMS = [
 ]
 
 export default function App() {
-  const [page, setPage] = useState(() => {
-    if (window.location.pathname === '/landing-page') return 'landing'
-    return 'pos'
-  })
-  const [shopName, setShopName] = useState('Naqano Coffee')
-  const [shopLogo, setShopLogo] = useState('')
+  const [page, setPage] = useState('pos')
+  const [shopName, setShopName] = useState('Bestari POS')
+  const [shopLogo, setShopLogo] = useState(null)
+  const [isAuthenticated, setIsAuthenticated] = useState(() => !!localStorage.getItem('bestari_license'))
   const [now, setNow] = useState(new Date())
   const [mobileCartOpen, setMobileCartOpen] = useState(false)
-  const [sidebarOpen, setSidebarOpen] = useState(false)       // mobile drawer
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false) // desktop collapse
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  
+  const [isReady, setIsReady] = useState(false)
+  const [needsOwnerSetup, setNeedsOwnerSetup] = useState(false)
+  const [currentUser, setCurrentUser] = useState(null)
 
-  useEffect(() => {
-    if (page === 'landing') {
-      window.history.pushState(null, '', '/landing-page')
-    } else {
-      window.history.pushState(null, '', '/')
-    }
-  }, [page])
-
-  const { setTaxPercent, items, getTotal, autoOpenPayment } = useCartStore()
+  const { items, getTotal } = useCartStore()
   const itemCount = items.reduce((s, i) => s + i.qty, 0)
   const total = getTotal()
 
   useEffect(() => {
-    if (autoOpenPayment && page === 'pos') setMobileCartOpen(true)
-  }, [autoOpenPayment, page])
-
-  useEffect(() => {
+    if (!isAuthenticated) return
     getAllSettings().then(s => {
       if (s.shopName) setShopName(s.shopName)
       if (s.shopLogo) setShopLogo(s.shopLogo)
-      if (s.taxPercent) setTaxPercent(Number.parseFloat(s.taxPercent))
-
-      // Auto-backup harian: jalankan sekali saat pertama buka di hari baru, JIKA diaktifkan
-      if (s.autoBackup === 'true') {
-        runDailyAutoBackup()
-          .then(({ skipped, filename }) => {
-            if (!skipped) {
-              toast.success(`💾 Backup otomatis tersimpan: ${filename}`)
-            }
-          })
-          .catch(() => {
-            // Backup gagal — jangan crash app, cukup log di console
-          })
+      if (!s.ownerPin) {
+        setNeedsOwnerSetup(true)
       }
+      setIsReady(true)
     })
 
-    // Seed addons if empty (for users upgrading from v5 to v6)
     db.addons.count().then(count => {
       if (count === 0) {
         db.addons.bulkAdd([
@@ -93,63 +77,67 @@ export default function App() {
 
     const tick = setInterval(() => setNow(new Date()), 1000)
     return () => clearInterval(tick)
-  }, [])
+  }, [isAuthenticated])
+
+  if (page === 'landing') return <LandingPage />
+  if (!isAuthenticated) return <AuthPage onLoginSuccess={() => setIsAuthenticated(true)} />
+  if (!isReady) return <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white">Loading...</div>
+  if (needsOwnerSetup) return <OwnerSetup onComplete={() => setNeedsOwnerSetup(false)} />
+  if (!currentUser) return <PinLogin onLogin={(user) => setCurrentUser(user)} />
+
+  const handleNavigate = (id) => {
+    if (currentUser.role === 'CASHIER' && (id === 'settings' || id === 'reports' || id === 'inventory')) {
+      alert('Akses Ditolak. Menu ini hanya untuk Owner.')
+      return
+    }
+    setPage(id)
+    if (window.innerWidth <= 768) setSidebarOpen(false)
+  }
 
   const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
   const dateStr = now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })
 
-  function navigate(id) {
-    setPage(id)
-    setSidebarOpen(false) // tutup drawer di mobile setelah pilih menu
-    if (id !== 'pos') setMobileCartOpen(false)
-  }
-
-  if (page === 'landing') {
-    return <LandingPage onLogin={() => setPage('pos')} />
-  }
-
   return (
     <div className="app">
       <Toast />
-
-      {/* ===================== SIDEBAR ===================== */}
-      {/* Overlay backdrop (mobile) */}
-      {sidebarOpen && (
-        <div
-          className="sidebar-overlay visible"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+      {sidebarOpen && <div className="sidebar-overlay visible" onClick={() => setSidebarOpen(false)} />}
 
       <aside className={`sidebar ${sidebarCollapsed ? 'collapsed' : ''} ${sidebarOpen ? 'mobile-open' : ''}`}>
-        {/* Brand */}
         <div className="sidebar-brand">
           {shopLogo ? (
             <img src={shopLogo} alt="Logo" className="brand-logo" />
           ) : (
             <Coffee size={26} color="#fff" strokeWidth={2} className="brand-icon" />
           )}
-          <span className="brand-name">{shopName}</span>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <span className="brand-name" style={{ fontSize: 16 }}>{shopName}</span>
+            <span style={{ fontSize: 11, color: 'var(--tosca)', marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
+              <div style={{width: 6, height: 6, borderRadius: 3, background: 'var(--tosca)'}} />
+              {currentUser?.name || 'Kasir'}
+            </span>
+          </div>
         </div>
 
-        {/* Navigation */}
         <nav className="sidebar-nav">
-          {NAV_ITEMS.map(({ id, label, Icon }) => (
-            <button
-              key={id}
-              className={`nav-btn ${page === id ? 'active' : ''}`}
-              onClick={() => navigate(id)}
-              title={label}
-            >
-              <span className="nav-icon">
-                <Icon size={18} strokeWidth={2} />
-              </span>
-              <span className="nav-label">{label}</span>
-            </button>
-          ))}
+          {NAV_ITEMS.map(({ id, label, Icon }) => {
+            const isRestricted = currentUser?.role === 'CASHIER' && (id === 'settings' || id === 'reports' || id === 'inventory')
+            if (isRestricted) return null
+            return (
+              <button
+                key={id}
+                className={`nav-btn ${page === id ? 'active' : ''}`}
+                onClick={() => handleNavigate(id)}
+                title={label}
+              >
+                <span className="nav-icon">
+                  <Icon size={18} strokeWidth={2} />
+                </span>
+                <span className="nav-label">{label}</span>
+              </button>
+            )
+          })}
         </nav>
 
-        {/* Footer — jam & tombol collapse */}
         <div className="sidebar-footer">
           <div className="sidebar-time">
             <span className="time-clock">{timeStr}</span>
@@ -165,6 +153,24 @@ export default function App() {
               ? <ChevronsRight size={16} strokeWidth={2.5} />
               : <ChevronsLeft size={16} strokeWidth={2.5} />
             }
+          </button>
+          {/* Logout/Lock button */}
+          <button
+            className="sidebar-logout-btn"
+            style={{ 
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: '100%', padding: '8px', borderRadius: 'var(--radius-md)', 
+              border: 'none', cursor: 'pointer', background: 'var(--bg-card)', 
+              marginTop: '4px' 
+            }}
+            onClick={() => {
+              if (confirm('Kunci layar dan keluar dari sesi ini?')) {
+                setCurrentUser(null)
+              }
+            }}
+            title="Kunci Layar"
+          >
+            <Lock size={16} strokeWidth={2.5} color="var(--red)" />
           </button>
         </div>
       </aside>
@@ -227,9 +233,9 @@ export default function App() {
                 </div>
               )
             }
-            if (page === 'products')   return <Products />
-            if (page === 'categories') return <Categories />
-            if (page === 'addons')     return <AddOns />
+            if (page === 'products')   return <Products role={currentUser?.role} />
+            if (page === 'categories') return <Categories role={currentUser?.role} />
+            if (page === 'addons')     return <AddOns role={currentUser?.role} />
             if (page === 'queue')      return <QueuePage onNavigate={setPage} />
             if (page === 'inventory')  return <Inventory />
             if (page === 'reports')    return <Reports />

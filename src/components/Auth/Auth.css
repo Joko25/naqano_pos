@@ -1,0 +1,296 @@
+.auth-container {
+  display: flex;
+  min-height: 100vh;
+  width: 100vw;
+  background: #0f172a;
+  font-family: 'Inter', sans-serif;
+  color: #fff;
+}
+
+.auth-left {
+  flex: 1;
+  background: linear-gradient(135deg, #0d9488, #0f766e);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 60px;
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-left::before {
+  content: '';
+  position: absolute;
+  top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
+  animation: rotateBg 20s linear infinite;
+}
+
+@keyframes rotateBg {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.auth-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+  background: #0f172a;
+  position: relative;
+}
+
+/* Numpad centered full screen mode */
+.auth-center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+  background: #0f172a;
+  position: relative;
+  width: 100vw;
+  min-height: 100vh;
+}
+
+.auth-center::before {
+  content: '';
+  position: absolute;
+  top: -20%; right: -10%;
+  width: 50%; height: 50%;
+  background: radial-gradient(circle, rgba(45, 212, 191, 0.1) 0%, transparent 70%);
+}
+
+.auth-center::after {
+  content: '';
+  position: absolute;
+  bottom: -20%; left: -10%;
+  width: 50%; height: 50%;
+  background: radial-gradient(circle, rgba(14, 165, 233, 0.1) 0%, transparent 70%);
+}
+
+.auth-form-card {
+  width: 100%;
+  max-width: 420px;
+  background: rgba(30, 41, 59, 0.5);
+  border: 1px solid rgba(255,255,255,0.1);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding: 40px;
+  border-radius: 24px;
+  box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+  z-index: 10;
+}
+
+.auth-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 32px;
+  font-weight: 800;
+  margin-bottom: 24px;
+  position: relative;
+  z-index: 1;
+}
+
+.auth-features {
+  margin-top: 40px;
+  position: relative;
+  z-index: 1;
+}
+
+.auth-feature-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 16px;
+  margin-bottom: 16px;
+  background: rgba(0,0,0,0.2);
+  padding: 12px 20px;
+  border-radius: 99px;
+  width: fit-content;
+  backdrop-filter: blur(10px);
+}
+
+.auth-title {
+  font-size: 28px;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.auth-subtitle {
+  color: #94a3b8;
+  font-size: 14px;
+  margin-bottom: 32px;
+  line-height: 1.6;
+}
+
+.auth-input-group {
+  position: relative;
+  margin-bottom: 24px;
+}
+
+.auth-input-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #64748b;
+}
+
+.auth-input {
+  width: 100%;
+  padding: 16px 16px 16px 48px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid #334155;
+  border-radius: 12px;
+  color: #fff;
+  font-size: 16px;
+  font-family: monospace;
+  letter-spacing: 1px;
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+.auth-input:focus {
+  border-color: #2dd4bf;
+  box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.2);
+}
+
+.auth-input.text-center {
+  padding-left: 16px;
+  text-align: center;
+  letter-spacing: 8px;
+  font-size: 20px;
+}
+
+.auth-btn {
+  width: 100%;
+  padding: 16px;
+  background: linear-gradient(135deg, #0d9488, #0f766e);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+}
+
+.auth-btn:hover {
+  background: linear-gradient(135deg, #14b8a6, #0d9488);
+  box-shadow: 0 10px 20px rgba(13, 148, 136, 0.3);
+  transform: translateY(-2px);
+}
+
+.auth-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.auth-error {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+/* Numpad styles */
+.numpad-dots {
+  display: flex;
+  gap: 24px;
+  justify-content: center;
+  margin-bottom: 48px;
+}
+
+.numpad-dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.2);
+  background: rgba(0,0,0,0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.numpad-dot.filled {
+  background: #2dd4bf;
+  border-color: #2dd4bf;
+  transform: scale(1.2);
+  box-shadow: 0 0 16px rgba(45, 212, 191, 0.6);
+}
+
+.numpad-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  width: 100%;
+  max-width: 320px;
+  margin: 0 auto;
+}
+
+.numpad-btn {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 24px;
+  background: rgba(30, 41, 59, 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: #fff;
+  font-size: 32px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.numpad-btn:hover {
+  background: rgba(51, 65, 85, 0.6);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+}
+
+.numpad-btn:active {
+  background: #0d9488;
+  transform: translateY(2px) scale(0.95);
+  box-shadow: none;
+}
+
+.numpad-action {
+  color: #94a3b8;
+  background: rgba(0,0,0,0.1);
+  font-size: 22px;
+}
+
+.numpad-action:hover {
+  color: #fff;
+  background: rgba(239, 68, 68, 0.2); /* Red tint for delete/clear */
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+@media (max-width: 768px) {
+  .auth-left { display: none; }
+  .auth-right { padding: 20px; }
+  .auth-center { padding: 20px; justify-content: flex-start; padding-top: 10vh; }
+  .auth-form-card { padding: 24px; border-radius: 20px; }
+  .numpad-grid { max-width: 280px; gap: 16px; }
+  .numpad-btn { font-size: 28px; border-radius: 20px; }
+  .numpad-dots { margin-bottom: 32px; gap: 16px; }
+  .numpad-dot { width: 16px; height: 16px; }
+}

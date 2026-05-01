@@ -49,6 +49,7 @@
 
 @media (max-width: 600px) {
   .settings-grid { grid-template-columns: 1fr; }
+  .cashier-form-grid { grid-template-columns: 1fr !important; align-items: stretch !important; }
 }
 
 /* DB Backup & Restore */
