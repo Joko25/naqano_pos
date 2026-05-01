@@ -49,9 +49,10 @@ export default function Categories({ role }) {
     const cat = categories.find(c => c.id === id)
     const count = productCounts[cat?.name] || 0
     if (count > 0) {
-      toast.error(`Tidak bisa hapus — ada ${count} produk di kategori ini!`)
-      setConfirmId(null)
-      return
+      if (!window.confirm(`Perhatian: Ada ${count} produk di kategori ini. Menghapus kategori tidak akan menghapus produk, namun produk tersebut mungkin tidak memiliki kategori. Lanjutkan?`)) {
+        setConfirmId(null)
+        return
+      }
     }
     await db.categories.delete(id)
     toast.success('Kategori dihapus')
@@ -108,8 +109,7 @@ export default function Categories({ role }) {
                       className="btn btn-sm"
                       style={{ background: 'var(--red-glow)', color: 'var(--red)' }}
                       onClick={() => setConfirmId(cat.id)}
-                      disabled={count > 0}
-                      title={count > 0 ? `Tidak bisa hapus — ada ${count} produk` : 'Hapus kategori'}
+                      title="Hapus kategori"
                     >
                       🗑️
                     </button>

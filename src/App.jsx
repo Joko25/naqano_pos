@@ -9,7 +9,6 @@ import POSView from './components/POS/POSView'
 import Cart from './components/Cart/Cart'
 import Products from './components/Products/Products'
 import Categories from './components/Categories/Categories'
-import LandingPage from './components/Landing/LandingPage'
 import AuthPage from './components/Auth/AuthPage'
 import PinLogin from './components/Auth/PinLogin'
 import OwnerSetup from './components/Auth/OwnerSetup'
@@ -79,7 +78,6 @@ export default function App() {
     return () => clearInterval(tick)
   }, [isAuthenticated])
 
-  if (page === 'landing') return <LandingPage />
   if (!isAuthenticated) return <AuthPage onLoginSuccess={() => setIsAuthenticated(true)} />
   if (!isReady) return <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white">Loading...</div>
   if (needsOwnerSetup) return <OwnerSetup onComplete={() => setNeedsOwnerSetup(false)} />
