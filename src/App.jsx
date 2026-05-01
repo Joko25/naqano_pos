@@ -8,6 +8,7 @@ import POSView from './components/POS/POSView'
 import Cart from './components/Cart/Cart'
 import Products from './components/Products/Products'
 import Categories from './components/Categories/Categories'
+import LandingPage from './components/Landing/LandingPage'
 import AddOns from './components/AddOns/AddOns'
 import Inventory from './components/Inventory/Inventory'
 import QueuePage from './components/Queue/QueuePage'
@@ -31,13 +32,24 @@ const NAV_ITEMS = [
 ]
 
 export default function App() {
-  const [page, setPage] = useState('pos')
+  const [page, setPage] = useState(() => {
+    if (window.location.pathname === '/landing-page') return 'landing'
+    return 'pos'
+  })
   const [shopName, setShopName] = useState('Naqano Coffee')
   const [shopLogo, setShopLogo] = useState('')
   const [now, setNow] = useState(new Date())
   const [mobileCartOpen, setMobileCartOpen] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)       // mobile drawer
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false) // desktop collapse
+
+  useEffect(() => {
+    if (page === 'landing') {
+      window.history.pushState(null, '', '/landing-page')
+    } else {
+      window.history.pushState(null, '', '/')
+    }
+  }, [page])
 
   const { setTaxPercent, items, getTotal, autoOpenPayment } = useCartStore()
   const itemCount = items.reduce((s, i) => s + i.qty, 0)
@@ -52,6 +64,19 @@ export default function App() {
       if (s.shopName) setShopName(s.shopName)
       if (s.shopLogo) setShopLogo(s.shopLogo)
       if (s.taxPercent) setTaxPercent(Number.parseFloat(s.taxPercent))
+
+      // Auto-backup harian: jalankan sekali saat pertama buka di hari baru, JIKA diaktifkan
+      if (s.autoBackup === 'true') {
+        runDailyAutoBackup()
+          .then(({ skipped, filename }) => {
+            if (!skipped) {
+              toast.success(`💾 Backup otomatis tersimpan: ${filename}`)
+            }
+          })
+          .catch(() => {
+            // Backup gagal — jangan crash app, cukup log di console
+          })
+      }
     })
 
     // Seed addons if empty (for users upgrading from v5 to v6)
@@ -66,17 +91,6 @@ export default function App() {
       }
     })
 
-    // Auto-backup harian: jalankan sekali saat pertama buka di hari baru
-    runDailyAutoBackup()
-      .then(({ skipped, filename }) => {
-        if (!skipped) {
-          toast.success(`💾 Backup otomatis tersimpan: ${filename}`)
-        }
-      })
-      .catch(() => {
-        // Backup gagal — jangan crash app, cukup log di console
-      })
-
     const tick = setInterval(() => setNow(new Date()), 1000)
     return () => clearInterval(tick)
   }, [])
@@ -88,6 +102,10 @@ export default function App() {
     setPage(id)
     setSidebarOpen(false) // tutup drawer di mobile setelah pilih menu
     if (id !== 'pos') setMobileCartOpen(false)
+  }
+
+  if (page === 'landing') {
+    return <LandingPage onLogin={() => setPage('pos')} />
   }
 
   return (

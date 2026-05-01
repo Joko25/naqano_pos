@@ -272,7 +272,21 @@ export default function Settings({ onLogoChange }) {
         {/* Database: Backup & Restore */}
         <div className="settings-section">
           <div className="settings-section-title"><RefreshCw size={15} strokeWidth={2} /> Database: Backup & Restore</div>
-          <div className="db-controls">
+          <div className="settings-grid">
+            <div className="input-group" style={{ gridColumn: '1 / -1' }}>
+              <label className="input-label">Auto-Backup Harian</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 8 }}>
+                 <input 
+                   type="checkbox" 
+                   id="auto-backup-check"
+                   checked={form.autoBackup === 'true'} 
+                   onChange={e => set('autoBackup', String(e.target.checked))} 
+                 />
+                 <label htmlFor="auto-backup-check" style={{ fontSize: 13, cursor: 'pointer' }}>Download file backup otomatis saat aplikasi pertama kali dibuka (sehari sekali)</label>
+              </div>
+            </div>
+          </div>
+          <div className="db-controls" style={{ marginTop: 16 }}>
             <div className="db-card">
               <div className="db-icon bg-green"><Download size={18} /></div>
               <div className="db-info">

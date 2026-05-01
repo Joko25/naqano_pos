@@ -28,6 +28,7 @@ db.on('populate', async () => {
     { key: 'bankHolder', value: 'Nur Hasanah' },
     { key: 'shopLogo', value: '/logo.png' },
     { key: 'receiptFooter', value: 'Terima kasih sudah berkunjung! ☕' },
+    { key: 'autoBackup', value: 'false' },
   ])
 
   await db.categories.bulkAdd([
