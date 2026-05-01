@@ -9,15 +9,16 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
-        name: 'Naqano Coffee POS',
-        short_name: 'Naqano POS',
-        description: 'Sistem Kasir Naqano Coffee',
-        theme_color: '#0d9488',
-        background_color: '#1a1a1a',
+        name: 'Bestari POS',
+        short_name: 'BestariPOS',
+        description: 'Sistem Kasir Modern & Cepat',
+        theme_color: '#28c8b4',
+        background_color: '#0f172a',
         display: 'standalone',
         orientation: 'any',
+        start_url: '/pos',
         icons: [
-          { src: 'logo.png', sizes: '512x512', type: 'image/png' },
+          { src: 'bestari-logo.svg', sizes: '512x512', type: 'image/svg+xml' },
         ],
       },
       workbox: {
