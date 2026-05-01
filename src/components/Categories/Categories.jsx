@@ -9,7 +9,8 @@ const ICON_OPTIONS = [
   '🧇', '🥞', '🍩', '🍦', '🍮', '🥛', '🍺', '🍹', '🧋', '🫗',
 ]
 
-export default function Categories() {
+export default function Categories({ role }) {
+  const isCashier = role === 'CASHIER'
   const [categories, setCategories] = useState([])
   const [showForm, setShowForm] = useState(false)
   const [editCat, setEditCat] = useState(null)
@@ -48,9 +49,10 @@ export default function Categories() {
     const cat = categories.find(c => c.id === id)
     const count = productCounts[cat?.name] || 0
     if (count > 0) {
-      toast.error(`Tidak bisa hapus — ada ${count} produk di kategori ini!`)
-      setConfirmId(null)
-      return
+      if (!window.confirm(`Perhatian: Ada ${count} produk di kategori ini. Menghapus kategori tidak akan menghapus produk, namun produk tersebut mungkin tidak memiliki kategori. Lanjutkan?`)) {
+        setConfirmId(null)
+        return
+      }
     }
     await db.categories.delete(id)
     toast.success('Kategori dihapus')
@@ -61,12 +63,14 @@ export default function Categories() {
     <div className="categories-page">
       <div className="categories-header">
         <h2 className="page-title">🗂️ Master Kategori</h2>
-        <button
-          className="btn btn-amber"
-          onClick={() => { setEditCat(null); setShowForm(true) }}
-        >
-          + Tambah Kategori
-        </button>
+        {!isCashier && (
+          <button
+            className="btn btn-amber"
+            onClick={() => { setEditCat(null); setShowForm(true) }}
+          >
+            + Tambah Kategori
+          </button>
+        )}
       </div>
 
       {categories.length === 0 ? (
@@ -74,11 +78,11 @@ export default function Categories() {
           icon="🗂️"
           title="Belum ada kategori"
           subtitle="Tambah kategori untuk mengorganisir produk Anda"
-          action={
+          action={!isCashier && (
             <button className="btn btn-amber" onClick={() => setShowForm(true)}>
               + Tambah Kategori
             </button>
-          }
+          )}
         />
       ) : (
         <div className="cat-grid">
@@ -93,23 +97,24 @@ export default function Categories() {
                     {count} produk
                   </div>
                 </div>
-                <div className="cat-actions">
-                  <button
-                    className="btn btn-ghost btn-sm"
-                    onClick={() => { setEditCat(cat); setShowForm(true) }}
-                  >
-                    ✏️ Edit
-                  </button>
-                  <button
-                    className="btn btn-sm"
-                    style={{ background: 'var(--red-glow)', color: 'var(--red)' }}
-                    onClick={() => setConfirmId(cat.id)}
-                    disabled={count > 0}
-                    title={count > 0 ? `Tidak bisa hapus — ada ${count} produk` : 'Hapus kategori'}
-                  >
-                    🗑️
-                  </button>
-                </div>
+                {!isCashier && (
+                  <div className="cat-actions">
+                    <button
+                      className="btn btn-ghost btn-sm"
+                      onClick={() => { setEditCat(cat); setShowForm(true) }}
+                    >
+                      ✏️ Edit
+                    </button>
+                    <button
+                      className="btn btn-sm"
+                      style={{ background: 'var(--red-glow)', color: 'var(--red)' }}
+                      onClick={() => setConfirmId(cat.id)}
+                      title="Hapus kategori"
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                )}
               </div>
             )
           })}

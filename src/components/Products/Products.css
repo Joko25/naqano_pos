@@ -76,3 +76,64 @@
 .text-red { color: var(--red); font-weight: bold; }
 .text-green { color: var(--green); font-weight: bold; }
 .text-amber { color: var(--amber); }
+
+/* Responsive Table for Mobile */
+@media (max-width: 768px) {
+  .products-table-wrap {
+    padding: 0 14px 20px;
+  }
+  .table, .table tbody, .table tr, .table td {
+    display: block;
+    width: 100%;
+  }
+  .table thead {
+    display: none;
+  }
+  .table tr {
+    margin-bottom: 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    box-shadow: var(--shadow-sm);
+    position: relative;
+  }
+  .table td {
+    padding: 0;
+    border: none;
+    text-align: right;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .table td::before {
+    content: attr(data-label);
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  .table td:last-child {
+    margin-bottom: 0;
+  }
+  
+  /* Product Info Row (Name/Emoji) */
+  .table td:first-child {
+    justify-content: flex-start;
+    margin-bottom: 16px;
+    border-bottom: 1px dashed var(--border);
+    padding-bottom: 16px;
+  }
+  .table td:first-child::before {
+    display: none;
+  }
+  
+  /* Aksi / Action Row */
+  .table td:last-child[data-label=""] {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px dashed var(--border);
+    justify-content: flex-end;
+  }
+}
