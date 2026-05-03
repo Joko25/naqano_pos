@@ -85,7 +85,8 @@ export const useCartStore = create((set, get) => ({
     orderType: 'direct', 
     platform: null, 
     editingTransactionId: null, 
-    customerType: 'guest' 
+    customerType: 'guest',
+    autoOpenPayment: false
   }),
 
   getPrice: (product) => {

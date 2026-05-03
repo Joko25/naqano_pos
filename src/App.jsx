@@ -80,7 +80,12 @@ export default function App() {
 
   if (!isAuthenticated) return <AuthPage onLoginSuccess={() => setIsAuthenticated(true)} />
   if (!isReady) return <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white">Loading...</div>
-  if (needsOwnerSetup) return <OwnerSetup onComplete={() => setNeedsOwnerSetup(false)} />
+  if (needsOwnerSetup) return (
+    <OwnerSetup onComplete={() => {
+      setNeedsOwnerSetup(false)
+      setCurrentUser({ role: 'OWNER', name: 'Owner' })
+    }} />
+  )
   if (!currentUser) return <PinLogin onLogin={(user) => setCurrentUser(user)} />
 
   const handleNavigate = (id) => {
