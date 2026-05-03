@@ -21,6 +21,7 @@ import { Toast, toast } from './components/ui'
 import { db, getAllSettings } from './db'
 import { useCartStore } from './store/cartStore'
 import { runDailyAutoBackup } from './utils/autoBackup'
+import { supabase } from './lib/supabase'
 import './App.css'
 
 const NAV_ITEMS = [
@@ -54,6 +55,35 @@ export default function App() {
 
   useEffect(() => {
     if (!isAuthenticated) return
+
+    // Background validation (won't block offline usage if internet is down)
+    const validateLicense = async () => {
+      try {
+        const storedStr = localStorage.getItem('bestari_license')
+        if (!storedStr) return
+        const stored = JSON.parse(storedStr)
+        if (!stored.key || !stored.deviceId) return
+
+        const { data, error } = await supabase
+          .from('licenses')
+          .select('device_id, is_active')
+          .eq('license_key', stored.key)
+          .maybeSingle()
+
+        if (!error && data) {
+          // If license is deactivated or device ID no longer matches (was reset by admin)
+          if (!data.is_active || data.device_id !== stored.deviceId) {
+            localStorage.removeItem('bestari_license')
+            setIsAuthenticated(false)
+            alert('Sesi lisensi telah berakhir atau di-reset. Silakan lakukan aktivasi ulang.')
+          }
+        }
+      } catch (err) {
+        // Ignore network errors, remain offline capable
+      }
+    }
+    validateLicense()
+
     getAllSettings().then(s => {
       if (s.shopName) setShopName(s.shopName)
       if (s.shopLogo) setShopLogo(s.shopLogo)
