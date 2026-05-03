@@ -4,13 +4,15 @@ import { formatRp, formatDateTime, ORDER_STATUS_LABELS, PAYMENT_LABELS, ORDER_TY
 import { Clock, CheckCircle2, Loader2, Coffee, CreditCard, User, Edit2, Printer, Banknote, XCircle } from 'lucide-react'
 import { useCartStore } from '../../store/cartStore'
 import { toast } from '../ui'
+import PaymentModal from '../Payment/PaymentModal'
 import './Queue.css'
 
 export default function QueuePage({ onNavigate }) {
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [settings, setSettings] = useState({})
-  const { loadTransaction, clearCart } = useCartStore()
+  const [showPayment, setShowPayment] = useState(false)
+  const { loadTransaction, clearCart, getTotal, customerName } = useCartStore()
 
   useEffect(() => {
     loadOrders()
@@ -62,9 +64,14 @@ export default function QueuePage({ onNavigate }) {
       selectedAddons: item.selectedAddons || []
     }))
 
-    loadTransaction(order, cartItems, autoPay)
-    onNavigate('pos')
-    toast.info(autoPay ? 'Memproses pembayaran #' + order.receiptNo.split('-')[1] : 'Mengedit pesanan #' + order.receiptNo.split('-')[1])
+    loadTransaction(order, cartItems, false)
+    
+    if (autoPay) {
+      setShowPayment('select')
+    } else {
+      onNavigate('pos')
+      toast.info('Mengedit pesanan #' + order.receiptNo.split('-')[1])
+    }
   }
 
   function printReceipt(order) {
@@ -131,6 +138,18 @@ export default function QueuePage({ onNavigate }) {
           </div>
         </div>
       </div>
+
+      {showPayment && (
+        <PaymentModal
+          method={showPayment}
+          total={getTotal()}
+          customerName={customerName}
+          onClose={() => {
+            setShowPayment(false)
+            loadOrders() // Refresh queue after payment
+          }}
+        />
+      )}
     </div>
   )
 }
