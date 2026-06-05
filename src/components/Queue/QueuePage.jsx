@@ -83,11 +83,55 @@ export default function QueuePage({ onNavigate }) {
       shopLogo: settings.shopLogo || '/logo.png',
       receiptFooter: settings.receiptFooter || 'Terima kasih!',
     }
-    const w = window.open('', '_blank', 'width=400,height=700')
-    w.document.write(receiptHTML(receiptData))
-    w.document.close()
-    w.focus()
-    setTimeout(() => { w.print(); w.close() }, 500)
+
+    // Create print container
+    const printContainer = document.createElement('div')
+    printContainer.id = 'print-receipt-container'
+    printContainer.innerHTML = receiptHTML(receiptData)
+    document.body.appendChild(printContainer)
+
+    // Create print style to hide other elements
+    const style = document.createElement('style')
+    style.id = 'print-receipt-style'
+    style.innerHTML = `
+      @media print {
+        html, body {
+          margin: 0 !important;
+          padding: 0 !important;
+          width: 100% !important;
+          background: #fff !important;
+        }
+        body > *:not(#print-receipt-container) {
+          display: none !important;
+        }
+        #print-receipt-container {
+          display: block !important;
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 100% !important;
+          max-width: 280px !important;
+        }
+      }
+    `
+    document.head.appendChild(style)
+
+    const originalTitle = document.title
+    document.title = `Struk #${receiptData.receiptNo}`
+
+    // Delay a bit to ensure styles are applied
+    setTimeout(() => {
+      window.print()
+    }, 150)
+
+    // Cleanup function
+    const cleanup = () => {
+      printContainer.remove()
+      style.remove()
+      document.title = originalTitle
+    }
+
+    window.addEventListener('afterprint', cleanup, { once: true })
   }
 
   if (loading) return <div className="queue-loading"><Loader2 className="animate-spin" /> Memuat Antrean...</div>
@@ -243,37 +287,45 @@ function receiptHTML(receipt) {
       ${variantsHtml}
     </div>`
   }).join('')
-  return `<!DOCTYPE html><html><head><meta charset="utf-8">
-<title>Struk #${receipt.receiptNo}</title>
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Courier New', monospace; font-size: 12px; color: #000; background: #fff; padding: 8px; width: 280px; }
-  .sh { text-align: center; font-weight: bold; font-size: 16px; margin-bottom: 2px; }
-  .sa { text-align: center; font-size: 11px; margin-bottom: 8px; color: #444; }
-  .div { border-top: 1px dashed #000; margin: 6px 0; }
-  .row { display: flex; justify-content: space-between; font-size: 11px; margin: 2px 0; }
-  .ri { display: flex; justify-content: space-between; font-size: 11px; margin: 3px 0; }
-  .total-row { font-weight: bold; font-size: 13px; margin-top: 4px; }
-  .footer { text-align: center; font-size: 11px; margin-top: 10px; color: #555; }
-  @media print { body { margin: 0; } @page { margin: 0; size: 58mm auto; } }
-</style></head><body>
-<div class="sh">${receipt.shopName}</div>
-<div class="sa">${receipt.shopAddress}</div>
-<div class="div"></div>
-<div class="row"><span>No: ${receipt.receiptNo}</span></div>
-<div class="row"><span>Tgl: ${formatDateTime(receipt.createdAt)}</span></div>
-${receipt.customerName ? `<div class="row"><span>Nama: ${receipt.customerName}</span></div>` : ''}
-<div class="row"><span>Tipe: ${ORDER_TYPE_LABELS[receipt.orderType]}${receipt.platform ? ` (${PLATFORM_LABELS[receipt.platform]})` : ''}</span></div>
-<div class="row"><span>Bayar: ${PAYMENT_LABELS[receipt.paymentMethod]}</span></div>
-<div class="div"></div>
-${items}
-<div class="div"></div>
-<div class="row"><span>Subtotal</span><span>${formatRp(receipt.subtotal)}</span></div>
-${receipt.discount > 0 ? `<div class="row"><span>Diskon</span><span>-${formatRp(receipt.discount)}</span></div>` : ''}
-${receipt.tax > 0 ? `<div class="row"><span>Pajak</span><span>${formatRp(receipt.tax)}</span></div>` : ''}
-<div class="row total-row"><span>TOTAL</span><span>${formatRp(receipt.total)}</span></div>
-${receipt.paymentMethod === 'cash' ? `<div class="row"><span>Tunai</span><span>${formatRp(receipt.cashReceived)}</span></div><div class="row"><span>Kembali</span><span>${formatRp(receipt.change)}</span></div>` : ''}
-<div class="div"></div>
-<div class="footer">${receipt.receiptFooter}</div>
-</body></html>`
+
+  return `<style>
+    @media print {
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      #print-receipt-container {
+        font-family: 'Courier New', monospace;
+        font-size: 12px;
+        color: #000;
+        background: #fff;
+        padding: 8px;
+        width: 280px;
+        margin: 0 auto;
+      }
+      .sh { text-align: center; font-weight: bold; font-size: 16px; margin-bottom: 2px; }
+      .sa { text-align: center; font-size: 11px; margin-bottom: 8px; color: #444; }
+      .div { border-top: 1px dashed #000; margin: 6px 0; }
+      .row { display: flex; justify-content: space-between; font-size: 11px; margin: 2px 0; }
+      .ri { display: flex; justify-content: space-between; font-size: 11px; margin: 3px 0; }
+      .total-row { font-weight: bold; font-size: 13px; margin-top: 4px; }
+      .footer { text-align: center; font-size: 11px; margin-top: 10px; color: #555; }
+      @page { margin: 0; size: 58mm auto; }
+    }
+  </style>
+  <div class="sh">${receipt.shopName}</div>
+  <div class="sa">${receipt.shopAddress}</div>
+  <div class="div"></div>
+  <div class="row"><span>No: ${receipt.receiptNo}</span></div>
+  <div class="row"><span>Tgl: ${formatDateTime(receipt.createdAt)}</span></div>
+  ${receipt.customerName ? `<div class="row"><span>Nama: ${receipt.customerName}</span></div>` : ''}
+  <div class="row"><span>Tipe: ${ORDER_TYPE_LABELS[receipt.orderType]}${receipt.platform ? ` (${PLATFORM_LABELS[receipt.platform]})` : ''}</span></div>
+  <div class="row"><span>Bayar: ${PAYMENT_LABELS[receipt.paymentMethod]}</span></div>
+  <div class="div"></div>
+  ${items}
+  <div class="div"></div>
+  <div class="row"><span>Subtotal</span><span>${formatRp(receipt.subtotal)}</span></div>
+  ${receipt.discount > 0 ? `<div class="row"><span>Diskon</span><span>-${formatRp(receipt.discount)}</span></div>` : ''}
+  ${receipt.tax > 0 ? `<div class="row"><span>Pajak</span><span>${formatRp(receipt.tax)}</span></div>` : ''}
+  <div class="row total-row"><span>TOTAL</span><span>${formatRp(receipt.total)}</span></div>
+  ${receipt.paymentMethod === 'cash' ? `<div class="row"><span>Tunai</span><span>${formatRp(receipt.cashReceived)}</span></div><div class="row"><span>Kembali</span><span>${formatRp(receipt.change)}</span></div>` : ''}
+  <div class="div"></div>
+  <div class="footer">${receipt.receiptFooter}</div>`
 }
