@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react'
 import {
   Image, Store, DollarSign, Building2, Smartphone,
   AlertTriangle, Save, FolderOpen, Trash2, Receipt, Percent,
-  Download, Upload, RefreshCw, Lock
+  Download, Upload, RefreshCw, Lock, Bluetooth
 } from 'lucide-react'
 import { getAllSettings, setSetting, exportDatabase, importDatabase } from '../../db'
 import { toast } from '../ui'
+import { connectBluetoothPrinter, disconnectBluetoothPrinter, getConnectedBluetoothDevice } from '../../utils/print'
 import './Settings.css'
 
 const FIELDS = [
@@ -16,6 +17,27 @@ const FIELDS = [
 
 export default function Settings({ onLogoChange }) {
   const [form, setForm] = useState({})
+  const [btDevice, setBtDevice] = useState(getConnectedBluetoothDevice())
+
+  const handleConnectBt = async () => {
+    try {
+      const dev = await connectBluetoothPrinter()
+      setBtDevice(dev)
+      toast.success(`Terhubung ke ${dev.name}`)
+    } catch (err) {
+      toast.error(err.message)
+    }
+  }
+
+  const handleDisconnectBt = async () => {
+    try {
+      await disconnectBluetoothPrinter()
+      setBtDevice(null)
+      toast.success('Koneksi printer diputuskan')
+    } catch (err) {
+      toast.error(err.message)
+    }
+  }
   
   const licenseType = (() => {
     try {
@@ -273,6 +295,13 @@ export default function Settings({ onLogoChange }) {
           <div className="settings-section-title"><Receipt size={15} strokeWidth={2} /> Pengaturan Printer Struk</div>
           <div className="settings-grid">
             <div className="input-group">
+              <label className="input-label">Koneksi Printer</label>
+              <select className="select" value={form.printerConnection || 'system'} onChange={e => set('printerConnection', e.target.value)}>
+                <option value="system">Sistem (Dialog Print Browser / Pihak Ketiga)</option>
+                <option value="bluetooth">Direct Bluetooth (BLE - Tanpa Aplikasi)</option>
+              </select>
+            </div>
+            <div className="input-group">
               <label className="input-label">Lebar Kertas</label>
               <select className="select" value={form.printerWidth || '58mm'} onChange={e => set('printerWidth', e.target.value)}>
                 <option value="58mm">58mm (Kecil)</option>
@@ -300,6 +329,36 @@ export default function Settings({ onLogoChange }) {
               </div>
             </div>
           </div>
+
+          {form.printerConnection === 'bluetooth' && (
+            <div style={{ marginTop: 20, padding: 16, background: 'var(--bg-hover)', borderRadius: 'var(--radius-md)', border: '1px dashed var(--border-color)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+                <div>
+                  <div style={{ fontWeight: 'bold', fontSize: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Bluetooth size={16} style={{ color: btDevice ? 'var(--green)' : 'var(--text-muted)' }} />
+                    Direct Bluetooth LE Printer
+                  </div>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>
+                    {btDevice ? `Terhubung ke: ${btDevice.name}` : 'Printer tidak terhubung'}
+                  </div>
+                </div>
+                <div>
+                  {btDevice ? (
+                    <button className="btn btn-outline" style={{ borderColor: 'var(--red)', color: 'var(--red)' }} onClick={handleDisconnectBt}>
+                      Putuskan Koneksi
+                    </button>
+                  ) : (
+                    <button className="btn btn-amber" onClick={handleConnectBt}>
+                      Hubungkan Printer
+                    </button>
+                  )}
+                </div>
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 12, lineHeight: 1.4 }}>
+                ⚠️ <strong>Catatan:</strong> Fitur Direct Bluetooth menggunakan Web Bluetooth API. Printer Anda harus mendukung Bluetooth BLE (bukan hanya classic), dan aplikasi harus diakses via <strong>HTTPS</strong> atau <strong>localhost</strong> di browser Chrome/Android.
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Pegawai / Kasir */}

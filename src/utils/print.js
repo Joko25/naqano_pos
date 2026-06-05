@@ -1,5 +1,270 @@
 import { formatRp, formatDateTime, ORDER_TYPE_LABELS, PLATFORM_LABELS, PAYMENT_LABELS } from './format'
 
+// Module-level variables to hold active connection
+let activeDevice = null
+let activeCharacteristic = null
+
+function handleDisconnect() {
+  activeDevice = null
+  activeCharacteristic = null
+}
+
+class EscPosEncoder {
+  constructor() {
+    this.buffer = []
+  }
+  
+  writeBytes(bytes) {
+    if (bytes instanceof Array) {
+      this.buffer.push(...bytes)
+    } else if (bytes instanceof Uint8Array) {
+      this.buffer.push(...Array.from(bytes))
+    }
+    return this
+  }
+  
+  initialize() {
+    return this.writeBytes([0x1B, 0x40])
+  }
+  
+  align(value) {
+    return this.writeBytes([0x1B, 0x61, value])
+  }
+  
+  bold(value) {
+    return this.writeBytes([0x1B, 0x45, value ? 1 : 0])
+  }
+  
+  doubleSize(value) {
+    return this.writeBytes([0x1D, 0x21, value ? 0x11 : 0x00])
+  }
+  
+  text(value) {
+    const encoder = new TextEncoder()
+    return this.writeBytes(encoder.encode(value))
+  }
+  
+  newline() {
+    return this.writeBytes([0x0A])
+  }
+  
+  feed(lines = 1) {
+    for (let i = 0; i < lines; i++) {
+      this.newline()
+    }
+    return this
+  }
+  
+  cut() {
+    // GS V 66 0 (feeds paper and cuts)
+    return this.writeBytes([0x1D, 0x56, 0x42, 0x00])
+  }
+  
+  encode() {
+    return new Uint8Array(this.buffer)
+  }
+}
+
+function formatRow(left, right, maxChars) {
+  const spaces = maxChars - left.length - right.length
+  return spaces > 0 ? left + ' '.repeat(spaces) + right : left + ' ' + right
+}
+
+export function generateEscPosBytes(receipt, settings = {}) {
+  const encoder = new EscPosEncoder()
+  const maxChars = settings.printerWidth === '80mm' ? 48 : 32
+
+  encoder.initialize()
+
+  // Shop Name (Centered, Bold, Double Size)
+  encoder.align(1).bold(true).doubleSize(true)
+  encoder.text(receipt.shopName || 'Naqano Coffee').newline()
+  
+  // Shop Address & Phone
+  encoder.bold(false).doubleSize(false)
+  if (receipt.shopAddress) {
+    encoder.text(receipt.shopAddress).newline()
+  }
+  if (receipt.shopPhone) {
+    encoder.text(receipt.shopPhone).newline()
+  }
+  
+  // Divider
+  encoder.align(0).text('─'.repeat(maxChars)).newline()
+
+  // Meta info
+  encoder.text(`No: ${receipt.receiptNo}`).newline()
+  encoder.text(`Tgl: ${formatDateTime(receipt.createdAt)}`).newline()
+  if (receipt.customerName) {
+    encoder.text(`Nama: ${receipt.customerName}`).newline()
+  }
+  
+  const typeLabel = ORDER_TYPE_LABELS[receipt.orderType] || receipt.orderType
+  const platformLabel = receipt.platform ? ` (${PLATFORM_LABELS[receipt.platform] || receipt.platform})` : ''
+  encoder.text(`Tipe: ${typeLabel}${platformLabel}`).newline()
+  
+  const payLabel = PAYMENT_LABELS[receipt.paymentMethod] || receipt.paymentMethod
+  encoder.text(`Bayar: ${payLabel}`).newline()
+  
+  // Divider
+  encoder.text('─'.repeat(maxChars)).newline()
+
+  // Items
+  ;(receipt.items || []).forEach(item => {
+    const itemAddonsPrice = item.selectedAddons?.reduce((s, a) => s + (a.price * a.qty), 0) || 0
+    const itemTotal = (item.price + itemAddonsPrice) * item.qty
+    
+    const qtyText = `${item.qty}x `
+    const nameText = `${item.name}${item.temp && item.temp !== 'None' ? ` (${item.temp})` : ''}`
+    const priceText = formatRp(itemTotal)
+    
+    const leftText = qtyText + nameText
+    
+    if (leftText.length + priceText.length + 1 <= maxChars) {
+      encoder.text(formatRow(leftText, priceText, maxChars)).newline()
+    } else {
+      encoder.text(leftText).newline()
+      encoder.text(formatRow('', priceText, maxChars)).newline()
+    }
+    
+    // Variants & Addons
+    if (item.variants && item.variants.length > 0) {
+      encoder.text(`  ${item.variants.join(', ')}`).newline()
+    }
+    if (item.selectedAddons && item.selectedAddons.length > 0) {
+      item.selectedAddons.forEach(a => {
+        encoder.text(`  +${a.qty} ${a.name}`).newline()
+      })
+    }
+  })
+
+  // Divider
+  encoder.text('─'.repeat(maxChars)).newline()
+
+  // Totals
+  encoder.text(formatRow('Subtotal', formatRp(receipt.subtotal), maxChars)).newline()
+  if (receipt.discount > 0) {
+    encoder.text(formatRow('Diskon', `-${formatRp(receipt.discount)}`, maxChars)).newline()
+  }
+  if (receipt.tax > 0) {
+    encoder.text(formatRow('Pajak', formatRp(receipt.tax), maxChars)).newline()
+  }
+  
+  encoder.bold(true)
+  encoder.text(formatRow('TOTAL', formatRp(receipt.total), maxChars)).newline()
+  encoder.bold(false)
+
+  if (receipt.paymentMethod === 'cash') {
+    encoder.text(formatRow('Tunai', formatRp(receipt.cashReceived), maxChars)).newline()
+    encoder.text(formatRow('Kembali', formatRp(receipt.change), maxChars)).newline()
+  }
+
+  // Divider
+  encoder.text('─'.repeat(maxChars)).newline()
+
+  // Footer (Centered)
+  if (receipt.receiptFooter) {
+    encoder.align(1).text(receipt.receiptFooter).newline()
+  }
+
+  // Feed and Cut
+  encoder.feed(4)
+  encoder.cut()
+
+  return encoder.encode()
+}
+
+export async function connectBluetoothPrinter() {
+  if (typeof navigator === 'undefined' || !navigator.bluetooth) {
+    throw new Error('Web Bluetooth tidak didukung di browser atau device ini. Pastikan Anda menggunakan Chrome via HTTPS.')
+  }
+  
+  const optionalServices = [
+    '0000ffe0-0000-1000-8000-00805f9b34fb', // FFE0
+    '000018f0-0000-1000-8000-00805f9b34fb'  // Standard Print Service
+  ]
+
+  const device = await navigator.bluetooth.requestDevice({
+    acceptAllDevices: true,
+    optionalServices: optionalServices
+  })
+
+  const server = await device.gatt.connect()
+  
+  let characteristic = null
+  for (const serviceUuid of optionalServices) {
+    try {
+      const service = await server.getPrimaryService(serviceUuid)
+      const characteristics = await service.getCharacteristics()
+      for (const char of characteristics) {
+        if (char.properties.write || char.properties.writeWithoutResponse) {
+          characteristic = char
+          break
+        }
+      }
+      if (characteristic) break
+    } catch (e) {
+      console.log(`Service ${serviceUuid} not found or error:`, e)
+    }
+  }
+
+  if (!characteristic) {
+    try {
+      const services = await server.getPrimaryServices()
+      for (const service of services) {
+        const characteristics = await service.getCharacteristics()
+        for (const char of characteristics) {
+          if (char.properties.write || char.properties.writeWithoutResponse) {
+            characteristic = char
+            break
+          }
+        }
+        if (characteristic) break
+      }
+    } catch (e) {
+      console.log('Error discovering all services:', e)
+    }
+  }
+
+  if (!characteristic) {
+    throw new Error('Printer service/karakteristik tidak ditemukan.')
+  }
+
+  activeDevice = device
+  activeCharacteristic = characteristic
+  device.addEventListener('gattserverdisconnected', handleDisconnect)
+  
+  return { name: device.name || 'Printer Bluetooth' }
+}
+
+export async function disconnectBluetoothPrinter() {
+  if (activeDevice && activeDevice.gatt.connected) {
+    activeDevice.gatt.disconnect()
+  }
+  handleDisconnect()
+}
+
+export function getConnectedBluetoothDevice() {
+  if (activeDevice && activeDevice.gatt.connected) {
+    return { name: activeDevice.name || 'Printer Bluetooth' }
+  }
+  return null
+}
+
+export async function printDirectBluetooth(receipt, settings) {
+  if (!activeCharacteristic) {
+    throw new Error('Printer tidak terhubung.')
+  }
+  const bytes = generateEscPosBytes(receipt, settings)
+  
+  const chunkSize = 20
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    const chunk = bytes.slice(i, i + chunkSize)
+    await activeCharacteristic.writeValue(chunk)
+    await new Promise(resolve => setTimeout(resolve, 30))
+  }
+}
+
 export function receiptHTML(receipt, settings = {}) {
   const width = settings.printerWidth === '80mm' ? '360px' : '280px'
   const fontSize = settings.receiptFontSize || '12px'
@@ -71,7 +336,23 @@ export function receiptHTML(receipt, settings = {}) {
   <div class="footer">${receipt.receiptFooter}</div>`
 }
 
-export function executePrintReceipt(receipt, settings = {}) {
+export async function executePrintReceipt(receipt, settings = {}) {
+  // If connection is bluetooth
+  if (settings.printerConnection === 'bluetooth') {
+    try {
+      if (!activeCharacteristic) {
+        // Trigger connection dialog
+        const dev = await connectBluetoothPrinter()
+        alert(`Berhasil terhubung ke: ${dev.name}. Memulai cetak struk...`)
+      }
+      await printDirectBluetooth(receipt, settings)
+    } catch (err) {
+      console.error(err)
+      alert('Gagal cetak Bluetooth: ' + err.message)
+    }
+    return
+  }
+
   // Clean up previous container if it exists
   const existingContainer = document.getElementById('print-receipt-container')
   if (existingContainer) existingContainer.remove()
