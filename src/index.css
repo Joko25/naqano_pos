@@ -294,5 +294,6 @@ body {
     top: auto !important;
     width: 100% !important;
     margin: 0 auto !important;
+    padding-bottom: 60px !important;
   }
 }

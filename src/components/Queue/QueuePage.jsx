@@ -106,13 +106,18 @@ export default function QueuePage({ onNavigate }) {
     const cleanup = () => {
       if (printContainer.parentNode) printContainer.remove()
       document.title = originalTitle
+      document.body.removeEventListener('click', cleanup)
+      document.body.removeEventListener('touchstart', cleanup)
     }
 
-    // Clean up when window gets focus back (user returns from print dialog)
-    window.addEventListener('focus', cleanup, { once: true })
+    // Clean up when window gets focus back (user returns from print dialog and taps screen)
+    setTimeout(() => {
+      document.body.addEventListener('click', cleanup)
+      document.body.addEventListener('touchstart', cleanup)
+    }, 1000)
     
-    // Safety fallback: clean up after 1 minute if focus event didn't fire
-    setTimeout(cleanup, 60000)
+    // Safety fallback: clean up after 5 minutes
+    setTimeout(cleanup, 300000)
   }
 
   if (loading) return <div className="queue-loading"><Loader2 className="animate-spin" /> Memuat Antrean...</div>
