@@ -101,7 +101,10 @@ export default function QueuePage({ onNavigate }) {
     style.id = 'print-receipt-style'
     style.innerHTML = `
       #print-receipt-container {
-        display: none;
+        position: absolute;
+        left: -9999px;
+        top: -9999px;
+        width: 280px;
       }
       @media print {
         html, body {
@@ -116,6 +119,8 @@ export default function QueuePage({ onNavigate }) {
         #print-receipt-container {
           display: block !important;
           position: static !important;
+          left: auto !important;
+          top: auto !important;
           width: 100% !important;
           max-width: 280px !important;
         }

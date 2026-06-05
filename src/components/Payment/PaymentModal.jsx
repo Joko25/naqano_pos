@@ -217,7 +217,10 @@ export default function PaymentModal({ method, total, customerName, onClose }) {
     style.id = 'print-receipt-style'
     style.innerHTML = `
       #print-receipt-container {
-        display: none;
+        position: absolute;
+        left: -9999px;
+        top: -9999px;
+        width: ${width};
       }
       @media print {
         html, body {
@@ -232,6 +235,8 @@ export default function PaymentModal({ method, total, customerName, onClose }) {
         #print-receipt-container {
           display: block !important;
           position: static !important;
+          left: auto !important;
+          top: auto !important;
           width: 100% !important;
           max-width: ${width} !important;
         }
