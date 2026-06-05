@@ -198,6 +198,12 @@ export default function PaymentModal({ method, total, customerName, onClose }) {
   function printReceipt(customData) {
     const data = customData || receipt
 
+    // Clean up previous elements if they exist
+    const existingContainer = document.getElementById('print-receipt-container')
+    if (existingContainer) existingContainer.remove()
+    const existingStyle = document.getElementById('print-receipt-style')
+    if (existingStyle) existingStyle.remove()
+
     // Create print container
     const printContainer = document.createElement('div')
     printContainer.id = 'print-receipt-container'
@@ -210,6 +216,9 @@ export default function PaymentModal({ method, total, customerName, onClose }) {
     const style = document.createElement('style')
     style.id = 'print-receipt-style'
     style.innerHTML = `
+      #print-receipt-container {
+        display: none;
+      }
       @media print {
         html, body {
           margin: 0 !important;
@@ -222,9 +231,7 @@ export default function PaymentModal({ method, total, customerName, onClose }) {
         }
         #print-receipt-container {
           display: block !important;
-          position: absolute;
-          left: 0;
-          top: 0;
+          position: static !important;
           width: 100% !important;
           max-width: ${width} !important;
         }
@@ -238,13 +245,15 @@ export default function PaymentModal({ method, total, customerName, onClose }) {
     // Delay a bit to ensure styles are applied
     setTimeout(() => {
       window.print()
-    }, 150)
+    }, 300)
 
-    // Cleanup function
+    // Cleanup function with delay to allow Android OS Spooler to process the DOM
     const cleanup = () => {
-      printContainer.remove()
-      style.remove()
-      document.title = originalTitle
+      setTimeout(() => {
+        if (printContainer.parentNode) printContainer.remove()
+        if (style.parentNode) style.remove()
+        document.title = originalTitle
+      }, 5000)
     }
 
     window.addEventListener('afterprint', cleanup, { once: true })
