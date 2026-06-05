@@ -84,11 +84,9 @@ export default function QueuePage({ onNavigate }) {
       receiptFooter: settings.receiptFooter || 'Terima kasih!',
     }
 
-    // Clean up previous elements if they exist
+    // Clean up previous container if it exists
     const existingContainer = document.getElementById('print-receipt-container')
     if (existingContainer) existingContainer.remove()
-    const existingStyle = document.getElementById('print-receipt-style')
-    if (existingStyle) existingStyle.remove()
 
     // Create print container
     const printContainer = document.createElement('div')
@@ -96,42 +94,10 @@ export default function QueuePage({ onNavigate }) {
     printContainer.innerHTML = receiptHTML(receiptData)
     document.body.appendChild(printContainer)
 
-    // Create print style to hide other elements
-    const style = document.createElement('style')
-    style.id = 'print-receipt-style'
-    style.innerHTML = `
-      #print-receipt-container {
-        position: absolute;
-        left: -9999px;
-        top: -9999px;
-        width: 280px;
-      }
-      @media print {
-        html, body {
-          margin: 0 !important;
-          padding: 0 !important;
-          width: 100% !important;
-          background: #fff !important;
-        }
-        #root {
-          display: none !important;
-        }
-        #print-receipt-container {
-          display: block !important;
-          position: static !important;
-          left: auto !important;
-          top: auto !important;
-          width: 100% !important;
-          max-width: 280px !important;
-        }
-      }
-    `
-    document.head.appendChild(style)
-
     const originalTitle = document.title
     document.title = `Struk #${receiptData.receiptNo}`
 
-    // Delay a bit to ensure styles are applied
+    // Delay a bit to ensure browser renders the DOM before print preview
     setTimeout(() => {
       window.print()
     }, 300)
@@ -139,7 +105,6 @@ export default function QueuePage({ onNavigate }) {
     // Cleanup function
     const cleanup = () => {
       if (printContainer.parentNode) printContainer.remove()
-      if (style.parentNode) style.remove()
       document.title = originalTitle
     }
 

@@ -267,3 +267,32 @@ body {
 .text-2xl { font-size: 28px; }
 .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hidden { display: none; }
+
+/* ---------- Print Styles ---------- */
+#print-receipt-container {
+  position: absolute;
+  left: -9999px;
+  top: -9999px;
+}
+
+@media print {
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+  #root {
+    display: none !important;
+  }
+  #print-receipt-container {
+    display: block !important;
+    position: static !important;
+    left: auto !important;
+    top: auto !important;
+    width: 100% !important;
+    margin: 0 auto !important;
+  }
+}
