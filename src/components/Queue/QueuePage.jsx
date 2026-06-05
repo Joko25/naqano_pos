@@ -113,7 +113,7 @@ export default function QueuePage({ onNavigate }) {
           width: 100% !important;
           background: #fff !important;
         }
-        body > *:not(#print-receipt-container) {
+        #root {
           display: none !important;
         }
         #print-receipt-container {
@@ -136,16 +136,18 @@ export default function QueuePage({ onNavigate }) {
       window.print()
     }, 300)
 
-    // Cleanup function with delay to allow Android OS Spooler to process the DOM
+    // Cleanup function
     const cleanup = () => {
-      setTimeout(() => {
-        if (printContainer.parentNode) printContainer.remove()
-        if (style.parentNode) style.remove()
-        document.title = originalTitle
-      }, 5000)
+      if (printContainer.parentNode) printContainer.remove()
+      if (style.parentNode) style.remove()
+      document.title = originalTitle
     }
 
-    window.addEventListener('afterprint', cleanup, { once: true })
+    // Clean up when window gets focus back (user returns from print dialog)
+    window.addEventListener('focus', cleanup, { once: true })
+    
+    // Safety fallback: clean up after 1 minute if focus event didn't fire
+    setTimeout(cleanup, 60000)
   }
 
   if (loading) return <div className="queue-loading"><Loader2 className="animate-spin" /> Memuat Antrean...</div>
