@@ -169,7 +169,7 @@ export default function PaymentModal({ method, total, customerName, onClose }) {
       shopName: settings.shopName || 'Naqano Coffee',
       shopAddress: settings.shopAddress || '',
       shopPhone: settings.shopPhone || '',
-      shopLogo: settings.shopLogo || '/logo.png',
+      shopLogo: settings.shopLogo || '/bestari-logo.svg',
       receiptFooter: settings.receiptFooter || 'Terima kasih!',
       items: items.map(item => ({
         name: item.name,

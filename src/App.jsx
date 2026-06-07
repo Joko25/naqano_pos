@@ -3,7 +3,7 @@ import {
   Coffee, BarChart2, Settings, ShoppingBag, 
   Menu, X, Clock, Package, Tag,
   ChevronsLeft, ChevronsRight, PlusCircle, Lock,
-  ArrowRight, ChevronLeft, ShoppingCart
+  ArrowRight, ChevronLeft, ShoppingCart, Utensils
 } from 'lucide-react'
 import POSView from './components/POS/POSView'
 import Cart from './components/Cart/Cart'
@@ -137,11 +137,7 @@ export default function App() {
 
       <aside className={`sidebar ${sidebarCollapsed ? 'collapsed' : ''} ${sidebarOpen ? 'mobile-open' : ''}`}>
         <div className="sidebar-brand">
-          {shopLogo ? (
-            <img src={shopLogo} alt="Logo" className="brand-logo" />
-          ) : (
-            <Coffee size={26} color="#fff" strokeWidth={2} className="brand-icon" />
-          )}
+          <img src={shopLogo || '/bestari-logo.svg'} alt="Logo" className="brand-logo" />
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <span className="brand-name" style={{ fontSize: 16 }}>{shopName}</span>
             <span style={{ fontSize: 11, color: 'var(--tosca)', marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -216,10 +212,7 @@ export default function App() {
             {sidebarOpen ? <X size={20} strokeWidth={2.5} /> : <Menu size={20} strokeWidth={2.5} />}
           </button>
           <div className="topbar-brand">
-            {shopLogo
-              ? <img src={shopLogo} alt="Logo" className="brand-logo" />
-              : <Coffee size={22} color="#fff" strokeWidth={2} />
-            }
+            <img src={shopLogo || '/bestari-logo.svg'} alt="Logo" className="brand-logo" />
             <span className="brand-name">{shopName}</span>
           </div>
           <div className="topbar-right">

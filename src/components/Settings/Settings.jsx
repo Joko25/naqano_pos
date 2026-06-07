@@ -218,14 +218,7 @@ export default function Settings({ onLogoChange }) {
           <div className="settings-section-title"><Image size={15} strokeWidth={2} /> Logo Toko</div>
           <div className="logo-upload-area">
             <div className="logo-preview-box">
-              {form.shopLogo ? (
-                <img src={form.shopLogo} alt="Logo Toko" className="logo-preview-img" />
-              ) : (
-                <div className="logo-preview-placeholder">
-                  <Store size={32} strokeWidth={1} style={{ opacity: 0.3, color: 'var(--tosca)' }} />
-                  <span className="logo-placeholder-text">Belum ada logo</span>
-                </div>
-              )}
+              <img src={form.shopLogo || '/bestari-logo.svg'} alt="Logo Toko" className="logo-preview-img" />
             </div>
             <div className="logo-upload-actions">
               <label className="btn btn-outline logo-upload-btn" htmlFor="logo-file-input">
