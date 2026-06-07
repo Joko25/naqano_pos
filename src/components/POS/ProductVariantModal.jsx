@@ -54,7 +54,7 @@ export default function ProductVariantModal({ product, open, onClose, onAdd, ord
       
     // Build variants string (notes)
     const variants = []
-    if (product.category === 'Kopi' || product.category === 'Non-Kopi') {
+    if (product.temp && product.temp !== 'None') {
       if (product.temp === 'Ice' || product.temp === 'Ice/Hot') {
         variants.push(ice)
       }
@@ -90,7 +90,7 @@ export default function ProductVariantModal({ product, open, onClose, onAdd, ord
           <div className="variant-product-price">{formatRp(price)}</div>
         </div>
 
-        {(product.category === 'Kopi' || product.category === 'Non-Kopi') && (
+        {(product.temp && product.temp !== 'None') && (
           <>
             {(product.temp === 'Ice' || product.temp === 'Ice/Hot') && (
               <div className="variant-section">

@@ -3,7 +3,7 @@ import { db } from '../../db'
 import { formatRp } from '../../utils/format'
 import { Modal, Toggle, ConfirmModal, EmptyState, toast } from '../ui'
 import './Products.css'
-const EMOJI_OPTIONS = ['☕', '🧋', '🍵', '🍫', '🧃', '🍞', '🥐', '🍪', '🧁', '🍰', '🥤', '🫖']
+const EMOJI_OPTIONS = ['☕', '🧋', '🍵', '🍫', '🧃', '🥤', '🫖', '🍞', '🥐', '🥖', '🥨', '🥯', '🥞', '🍳', '🥩', '🍗', '🍖', '🍔', '🍟', '🍕', '🌭', '🥪', '🌮', '🌯', '🥗', '🥘', '🍜', '🍝', '🍲', '🍛', '🍣', '🍱', '🥟', '🍤', '🍙', '🍦', '🍧', '🍨', '🍩', '🍪', '🧁', '🍰', '🎂', '🍮', '🍿']
 const TEMP_OPTIONS = [
   { value: 'None', label: 'Normal', icon: null },
   { value: 'Ice', label: 'Ice', icon: '❄️' },
@@ -258,7 +258,7 @@ function ProductFormModal({ open, onClose, onSave, initial, categories = [] }) {
 
         <div className="input-group">
           <label className="input-label" htmlFor="prod-name">Nama Produk</label>
-          <input id="prod-name" className="input" value={form.name} onChange={e => set('name', e.target.value)} placeholder="Contoh: Es Kopi Susu" autoFocus />
+           <input id="prod-name" className="input" value={form.name} onChange={e => set('name', e.target.value)} placeholder="Contoh: Es Teh Manis atau Nasi Goreng" autoFocus />
         </div>
 
         <div className="input-group">

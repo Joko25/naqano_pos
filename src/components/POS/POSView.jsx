@@ -28,6 +28,8 @@ export default function POSView() {
   const [selectedProduct, setSelectedProduct] = useState(null)
   const { addItem, orderType, setOrderType, platform, setPlatform } = useCartStore()
 
+  const [hasAddons, setHasAddons] = useState(false)
+
   useEffect(() => {
     async function loadProducts() {
       const all = await db.products.toArray()
@@ -37,8 +39,13 @@ export default function POSView() {
       const cats = await db.categories.orderBy('name').toArray()
       setCategories(cats)
     }
+    async function loadAddons() {
+      const count = await db.addons.where('isActive').equals(1).count()
+      setHasAddons(count > 0)
+    }
     loadProducts()
     loadCategories()
+    loadAddons()
     const interval = setInterval(loadProducts, 3000)
     return () => clearInterval(interval)
   }, [])
@@ -50,13 +57,14 @@ export default function POSView() {
   })
 
   const handleAddItem = useCallback((product) => {
-    if (product.category === 'Kopi' || product.category === 'Non-Kopi') {
+    const hasTempOption = product.temp && product.temp !== 'None'
+    if (hasTempOption || hasAddons) {
       setSelectedProduct(product)
     } else {
       // Direct add without variants
       addItem({ ...product, variants: [], selectedAddons: [] })
     }
-  }, [addItem])
+  }, [addItem, hasAddons])
 
   const handleConfirmAdd = useCallback((productWithVariants) => {
     addItem(productWithVariants)

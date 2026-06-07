@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react'
 import {
-  Menu, X, CheckCircle2, Zap, Coffee, Smartphone, ShieldCheck, PieChart,
+  Menu, X, CheckCircle2, Zap, Utensils, Smartphone, ShieldCheck, PieChart,
   ChevronRight, PlayCircle, Star, Calculator, Layers, PlusCircle, Users, MessageCircle
 } from 'lucide-react'
 
 const UMKM_LOGOS = [
-  { name: 'Naqano Coffee', logo: '/Logo.png', isImage: true },
-  { name: 'Bumi Resto', initial: 'B' },
+  { name: 'Bestari Kuliner', initial: 'B' },
+  { name: 'Bumi Resto', initial: 'R' },
   { name: 'Senja Cafe', initial: 'S' },
   { name: 'Warung Kita', initial: 'W' },
 ]
@@ -17,7 +17,7 @@ const FEATURES = [
   { icon: Smartphone, color: 'text-blue-400', bg: 'bg-blue-400/10', title: 'QRIS & E-Wallet', desc: 'Dukung pembayaran modern langsung di layar tanpa repot ketik manual nominal di mesin EDC.' },
   { icon: Users, color: 'text-indigo-400', bg: 'bg-indigo-400/10', title: 'Keamanan Multi-Role', desc: 'Lindungi rahasia bisnis (HPP & Laporan) dengan pemisahan hak akses mutlak antara Owner dan Kasir.' },
   { icon: PlusCircle, color: 'text-orange-400', bg: 'bg-orange-400/10', title: 'Master Add-On Dinamis', desc: 'Atur Less Sugar, Extra Shot, atau Topping tambahan layaknya profesional dengan perhitungan harga otomatis.' },
-  { icon: Menu, color: 'text-green-400', bg: 'bg-green-400/10', title: 'Layar Antrean Barista', desc: 'Pesanan kasir otomatis muncul di layar khusus barista. Kurangi kesalahan pembuatan pesanan.' },
+  { icon: Menu, color: 'text-green-400', bg: 'bg-green-400/10', title: 'Layar Antrean Dapur', desc: 'Pesanan kasir otomatis muncul di layar khusus dapur atau barista. Kurangi kesalahan pembuatan pesanan.' },
   { icon: PieChart, color: 'text-purple-400', bg: 'bg-purple-400/10', title: 'Laporan Finansial', desc: 'Lihat margin keuntungan kotor dan bersih berdasarkan HPP dan biaya operasional langsung di app.' },
   { icon: MessageCircle, color: 'text-emerald-400', bg: 'bg-emerald-400/10', title: 'Kirim Struk via WA', desc: 'Ramah lingkungan dan kekinian! Kirim struk pembelian langsung ke nomor WhatsApp pelanggan dalam satu klik.' },
   { icon: ShieldCheck, color: 'text-primary', bg: 'bg-primary/10', title: 'Auto-Backup Aman', desc: 'Sistem backup otomatis setiap hari untuk memastikan data riwayat penjualan Anda tidak akan pernah hilang.' },
@@ -146,7 +146,7 @@ export default function LandingPage() {
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-2 cursor-pointer" onClick={() => window.scrollTo(0, 0)}>
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center shadow-lg">
-                <Coffee size={18} className="text-white" />
+                <Utensils size={18} className="text-white" />
               </div>
               <span className="font-bold text-2xl tracking-tight text-white">Bestari<span className="text-primary">POS</span></span>
             </div>
@@ -201,11 +201,11 @@ export default function LandingPage() {
               Sistem POS Tanpa Biaya Bulanan
             </div>
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight mb-6 leading-[1.1]">
-              Kelola Kedai Lebih <br className="hidden lg:block" />
+              Kelola Bisnis F&B <br className="hidden lg:block" />
               <span className="gradient-text">Cepat & Pintar.</span>
             </h1>
             <p className="text-lg md:text-xl text-slate-400 mb-10 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
-              BestariPOS adalah aplikasi kasir canggih yang bekerja 100% offline. Dilengkapi antrean barista, QRIS, dan manajemen add-on. Sekali beli, pakai selamanya.
+              BestariPOS adalah aplikasi kasir canggih yang bekerja 100% offline. Dilengkapi layar dapur, HPP resep otomatis, QRIS, dan manajemen add-on. Sekali beli, pakai selamanya.
             </p>
             <div className="flex flex-col sm:flex-row justify-center lg:justify-start gap-4">
               <a href="/pos" className="bg-emerald-400 hover:bg-emerald-300 text-slate-900 font-bold px-8 py-4 rounded-xl flex items-center justify-center gap-2 transition-all transform hover:scale-105 shadow-[0_0_20px_rgba(52,211,153,0.4)] hover:shadow-[0_0_30px_rgba(52,211,153,0.6)]">
@@ -242,7 +242,7 @@ export default function LandingPage() {
                 {/* Simulated UI */}
                 <div className="flex h-full gap-4">
                   <div className="w-16 rounded-xl bg-slate-800/50 border border-slate-700/50 flex flex-col items-center py-4 gap-4">
-                    <div className="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center mb-4"><Coffee size={16} /></div>
+                    <div className="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center mb-4"><Utensils size={16} /></div>
                     <div className="w-8 h-8 rounded-lg bg-slate-700/50"></div>
                     <div className="w-8 h-8 rounded-lg bg-slate-700/50"></div>
                     <div className="w-8 h-8 rounded-lg bg-slate-700/50"></div>
@@ -480,7 +480,7 @@ export default function LandingPage() {
             <div className="flex flex-col md:flex-row justify-between items-center gap-6">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded bg-primary/20 flex items-center justify-center">
-                  <Coffee size={16} className="text-primary" />
+                  <Utensils size={16} className="text-primary" />
                 </div>
                 <span className="font-bold text-xl text-white">BestariPOS</span>
               </div>

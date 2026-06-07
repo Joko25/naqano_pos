@@ -10,8 +10,8 @@ import { connectBluetoothPrinter, disconnectBluetoothPrinter, getConnectedBlueto
 import './Settings.css'
 
 const FIELDS = [
-  { key: 'shopName', label: 'Nama Toko', placeholder: 'Naqano Coffee', icon: '🏪' },
-  { key: 'shopAddress', label: 'Alamat', placeholder: 'Jl. Kopi Nikmat No. 1', icon: '📍' },
+  { key: 'shopName', label: 'Nama Toko', placeholder: 'Bestari Kuliner', icon: '🏪' },
+  { key: 'shopAddress', label: 'Alamat', placeholder: 'Jl. Kuliner Indah No. 1', icon: '📍' },
   { key: 'shopPhone', label: 'No. HP / WhatsApp', placeholder: '08123456789', icon: '📞' },
 ]
 
@@ -265,7 +265,7 @@ export default function Settings({ onLogoChange }) {
             </div>
             <div className="input-group">
               <label className="input-label">Atas Nama</label>
-              <input className="input" value={form.bankHolder || ''} onChange={e => set('bankHolder', e.target.value)} placeholder="Naqano Coffee" />
+              <input className="input" value={form.bankHolder || ''} onChange={e => set('bankHolder', e.target.value)} placeholder="Bestari Kuliner" />
             </div>
           </div>
         </div>
