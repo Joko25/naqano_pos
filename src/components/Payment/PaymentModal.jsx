@@ -7,6 +7,7 @@ import { toast } from '../ui'
 import QRCode from 'qrcode'
 import { generateDynamicQRIS } from '../../utils/qris'
 import { executePrintReceipt } from '../../utils/print'
+import { uploadBackupToCloud } from '../../utils/cloudBackup'
 import './Payment.css'
 
 export default function PaymentModal({ method, total, customerName, onClose }) {
@@ -193,6 +194,11 @@ export default function PaymentModal({ method, total, customerName, onClose }) {
       if (settings.autoPrint === 'true') {
         setTimeout(() => printReceipt(receiptData), 500)
       }
+    }
+
+    // Auto-Backup to Cloud if enabled in settings
+    if (settings.autoBackupCloud === 'true') {
+      uploadBackupToCloud().catch(err => console.error('[AutoCloudBackup] Gagal:', err))
     }
   }
 

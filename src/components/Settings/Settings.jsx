@@ -7,6 +7,7 @@ import {
 import { getAllSettings, setSetting, exportDatabase, importDatabase } from '../../db'
 import { toast } from '../ui'
 import { connectBluetoothPrinter, disconnectBluetoothPrinter, getConnectedBluetoothDevice } from '../../utils/print'
+import { uploadBackupToCloud, restoreFromCloud } from '../../utils/cloudBackup'
 import './Settings.css'
 
 const FIELDS = [
@@ -51,6 +52,43 @@ export default function Settings({ onLogoChange }) {
   const [cashiers, setCashiers] = useState([])
   const [newCashierName, setNewCashierName] = useState('')
   const [newCashierPin, setNewCashierPin] = useState('')
+
+  const [backupCloudLoading, setBackupCloudLoading] = useState(false)
+  const [restoreCloudLoading, setRestoreCloudLoading] = useState(false)
+
+  const handleCloudBackup = async () => {
+    setBackupCloudLoading(true)
+    try {
+      const res = await uploadBackupToCloud()
+      if (res.success) {
+        toast.success('Database berhasil dicadangkan ke cloud! ☁️')
+      } else {
+        toast.error(`Gagal mencadangkan: ${res.error}`)
+      }
+    } catch (err) {
+      toast.error(`Gagal mencadangkan: ${err.message}`)
+    } finally {
+      setBackupCloudLoading(false)
+    }
+  }
+
+  const handleCloudRestore = async () => {
+    if (!confirm('Peringatan: Pemulihan data dari cloud akan MENGHAPUS semua data lokal Anda saat ini dan menggantinya dengan data cloud. Tindakan ini tidak bisa dibatalkan! Lanjutkan?')) {
+      return
+    }
+    setRestoreCloudLoading(true)
+    try {
+      await restoreFromCloud()
+      toast.success('Database berhasil dipulihkan dari cloud! Memuat ulang aplikasi... 🔄')
+      setTimeout(() => {
+        window.location.reload()
+      }, 1500)
+    } catch (err) {
+      toast.error(`Gagal memulihkan data: ${err.message}`)
+    } finally {
+      setRestoreCloudLoading(false)
+    }
+  }
 
   useEffect(() => {
     getAllSettings().then(s => { 
@@ -439,13 +477,13 @@ export default function Settings({ onLogoChange }) {
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, color: 'var(--tosca)', fontWeight: 'bold' }}>
                 <Lock size={16} /> Fitur Premium Terkunci
               </div>
-              Maaf, fitur Ekspor/Impor Database dan Auto-Backup harian hanya tersedia untuk <strong>Lisensi Premium</strong>. Tingkatkan lisensi Anda untuk mengamankan data transaksi kedai Anda secara penuh!
+              Maaf, fitur Ekspor/Impor Database, Auto-Backup harian, serta Sinkronisasi Cloud hanya tersedia untuk <strong>Lisensi LIFETIME</strong>. Tingkatkan lisensi Anda untuk mengamankan data transaksi kedai Anda secara penuh!
             </div>
           ) : (
             <>
               <div className="settings-grid">
-                <div className="input-group" style={{ gridColumn: '1 / -1' }}>
-                  <label className="input-label">Auto-Backup Harian</label>
+                <div className="input-group">
+                  <label className="input-label">Auto-Backup Harian (Lokal)</label>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 8 }}>
                     <input 
                       type="checkbox" 
@@ -453,16 +491,30 @@ export default function Settings({ onLogoChange }) {
                       checked={form.autoBackup === 'true'} 
                       onChange={e => set('autoBackup', String(e.target.checked))} 
                     />
-                    <label htmlFor="auto-backup-check" style={{ fontSize: 13, cursor: 'pointer' }}>Download file backup otomatis saat aplikasi pertama kali dibuka (sehari sekali)</label>
+                    <label htmlFor="auto-backup-check" style={{ fontSize: 13, cursor: 'pointer' }}>Download file backup otomatis saat aplikasi dibuka (sehari sekali)</label>
+                  </div>
+                </div>
+
+                <div className="input-group">
+                  <label className="input-label">Auto-Backup ke Cloud</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 8 }}>
+                    <input 
+                      type="checkbox" 
+                      id="auto-backup-cloud-check"
+                      checked={form.autoBackupCloud === 'true'} 
+                      onChange={e => set('autoBackupCloud', String(e.target.checked))} 
+                    />
+                    <label htmlFor="auto-backup-cloud-check" style={{ fontSize: 13, cursor: 'pointer' }}>Unggah otomatis ke server cloud setiap kali transaksi selesai</label>
                   </div>
                 </div>
               </div>
-              <div className="db-controls" style={{ marginTop: 16 }}>
+              
+              <div className="db-controls" style={{ marginTop: 24 }}>
                 <div className="db-card">
                   <div className="db-icon bg-green"><Download size={18} /></div>
                   <div className="db-info">
                     <strong>Ekspor Data (Backup)</strong>
-                    <p>Simpan semua data (produk, transaksi, stok) ke dalam file JSON.</p>
+                    <p>Simpan semua data (produk, transaksi, stok) ke dalam file JSON lokal.</p>
                   </div>
                   <button className="btn btn-outline" onClick={handleExport}>Download Backup</button>
                 </div>
@@ -471,7 +523,7 @@ export default function Settings({ onLogoChange }) {
                   <div className="db-icon bg-amber"><Upload size={18} /></div>
                   <div className="db-info">
                     <strong>Impor Data (Restore)</strong>
-                    <p>Pindahkan data dari device lain. Semua data saat ini akan terhapus!</p>
+                    <p>Pindahkan data dari file JSON komputer Anda. Semua data saat ini akan terhapus!</p>
                   </div>
                   <label className="btn btn-outline btn-restore" htmlFor="db-import-input">Pilih File Backup</label>
                   <input
@@ -481,6 +533,28 @@ export default function Settings({ onLogoChange }) {
                     style={{ display: 'none' }}
                     onChange={handleImport}
                   />
+                </div>
+
+                <div className="db-card">
+                  <div className="db-icon" style={{ background: 'rgba(45, 212, 191, 0.15)', color: 'var(--tosca)' }}><Upload size={18} /></div>
+                  <div className="db-info">
+                    <strong>Cadangkan ke Cloud</strong>
+                    <p>Unggah seluruh data lokal Anda saat ini untuk diamankan di cloud server.</p>
+                  </div>
+                  <button className="btn btn-amber" disabled={backupCloudLoading} onClick={handleCloudBackup}>
+                    {backupCloudLoading ? 'Mengunggah...' : 'Backup ke Cloud'}
+                  </button>
+                </div>
+
+                <div className="db-card">
+                  <div className="db-icon" style={{ background: 'rgba(59, 130, 246, 0.15)', color: 'var(--blue)' }}><Download size={18} /></div>
+                  <div className="db-info">
+                    <strong>Pulihkan dari Cloud</strong>
+                    <p>Unduh cadangan dari cloud server dan timpa database lokal. Data lokal saat ini akan terhapus!</p>
+                  </div>
+                  <button className="btn btn-outline" style={{ borderColor: 'var(--blue)', color: 'var(--blue)' }} disabled={restoreCloudLoading} onClick={handleCloudRestore}>
+                    {restoreCloudLoading ? 'Memulihkan...' : 'Restore dari Cloud'}
+                  </button>
                 </div>
               </div>
             </>
